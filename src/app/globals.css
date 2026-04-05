@@ -1,26 +1,68 @@
 @import "tailwindcss";
 
+@theme {
+  /* Brand palette — earthy, warm, grounded */
+  --color-soil-900: #2c1a0e;
+  --color-soil-800: #3d2410;
+  --color-soil-700: #5c3a1e;
+  --color-soil-600: #7a4f2a;
+
+  --color-sage-700: #4a5e3a;
+  --color-sage-600: #5d7548;
+  --color-sage-500: #739159;
+  --color-sage-400: #92b071;
+  --color-sage-100: #e8f0e0;
+  --color-sage-50: #f4f8f0;
+
+  --color-harvest-600: #c47d1e;
+  --color-harvest-500: #d9922a;
+  --color-harvest-400: #e8a94a;
+  --color-harvest-100: #fdf0d8;
+
+  --color-cream: #faf8f3;
+  --color-parchment: #f2ede2;
+
+  /* Typography */
+  --font-serif: "Lora", "Georgia", serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  /* Spacing */
+  --max-w-content: 72rem;
+  --max-w-prose: 65ch;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: var(--color-cream);
+  --foreground: var(--color-soil-900);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+}
+
+/* Prose styles for blog content */
+.prose {
+  max-width: var(--max-w-prose);
+  line-height: 1.75;
+}
+.prose h2 { font-size: 1.5rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem; }
+.prose h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+.prose p { margin-bottom: 1.25rem; }
+.prose ul, .prose ol { margin-left: 1.5rem; margin-bottom: 1.25rem; }
+.prose li { margin-bottom: 0.4rem; }
+.prose a { color: var(--color-sage-600); text-decoration: underline; }
+.prose a:hover { color: var(--color-harvest-600); }
+.prose blockquote {
+  border-left: 4px solid var(--color-sage-400);
+  padding-left: 1.25rem;
+  color: var(--color-soil-600);
+  font-style: italic;
+  margin: 1.5rem 0;
 }
