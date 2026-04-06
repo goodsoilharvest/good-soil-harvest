@@ -15,7 +15,7 @@ export function Header() {
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <span className="text-[var(--color-harvest-400)] text-2xl">🌱</span>
             <span className="font-serif font-bold text-lg leading-tight">
-              Good Soil<br className="hidden sm:block" />{" "}
+              Good Soil{" "}
               <span className="text-[var(--color-sage-400)]">Harvest</span>
             </span>
           </Link>
@@ -31,10 +31,7 @@ export function Header() {
                 {niche.shortTitle}
               </Link>
             ))}
-            <Link
-              href="/blog"
-              className="px-3 py-1.5 rounded text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-            >
+            <Link href="/blog" className="px-3 py-1.5 rounded text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors">
               All Posts
             </Link>
             <Link
@@ -83,8 +80,6 @@ export function Header() {
           </nav>
         )}
       </div>
-
-      {siteConfig.name && null /* placeholder for announcement bar later */}
     </header>
   );
 }

@@ -34,6 +34,21 @@
 :root {
   --background: var(--color-cream);
   --foreground: var(--color-soil-900);
+  --surface: #ffffff;
+  --surface-muted: var(--color-parchment);
+  --border: var(--color-sage-100);
+  --text-muted: var(--color-soil-600);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f0a06;
+    --foreground: #e8ddd0;
+    --surface: #1c1208;
+    --surface-muted: #251a0d;
+    --border: #3d2a18;
+    --text-muted: #a08060;
+  }
 }
 
 body {

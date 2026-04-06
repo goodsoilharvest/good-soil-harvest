@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Lora, Inter } from "next/font/google";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { siteConfig } from "@/lib/config";
 import "./globals.css";
 
@@ -43,10 +41,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${lora.variable} ${inter.variable}`}>
-      <body className="min-h-screen flex flex-col bg-[var(--color-cream)]">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+      <body className="min-h-screen flex flex-col">
+        {children}
       </body>
     </html>
   );
