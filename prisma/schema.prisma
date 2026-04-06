@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  role          Role      @default(SUBSCRIBER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  subscription  Subscription?
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  ADMIN
+  SUBSCRIBER
+  READER
+}
+
+// ─── Subscriptions ───────────────────────────────────────────────────────────
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  status               SubscriptionStatus @default(FREE)
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum SubscriptionStatus {
+  FREE
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+// ─── Content ─────────────────────────────────────────────────────────────────
+
+model Post {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  title       String
+  description String
+  content     String     // MDX content
+  niche       NicheSlug
+  isPremium   Boolean    @default(false)
+  status      PostStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  affiliateLinks AffiliateLink[]
+}
+
+enum NicheSlug {
+  faith
+  finance
+  psychology
+  philosophy
+  science
+}
+
+enum PostStatus {
+  DRAFT       // agent-written, awaiting approval
+  APPROVED    // approved, scheduled or ready to publish
+  PUBLISHED   // live on site
+  REJECTED    // denied in CMS
+  ARCHIVED
+}
+
+// ─── Agent Pipeline ──────────────────────────────────────────────────────────
+
+model AgentDraft {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  content     String      // MDX content from Marceline
+  niche       NicheSlug
+  isPremium   Boolean     @default(false)
+  agentName   String      // which agent wrote it (e.g. "marceline")
+  notes       String?     // agent notes / research sources
+  createdAt   DateTime    @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String?     // admin user id
+  status      DraftStatus @default(PENDING)
+}
+
+enum DraftStatus {
+  PENDING    // in queue, not yet reviewed
+  APPROVED   // moved to Post table as APPROVED
+  REJECTED
+  EDITED     // approved with modifications
+}
+
+// ─── Affiliate Links ─────────────────────────────────────────────────────────
+
+model AffiliateLink {
+  id        String   @id @default(cuid())
+  postId    String
+  label     String   // display text
+  url       String
+  provider  String   // "amazon", "other"
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
