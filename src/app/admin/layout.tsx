@@ -33,6 +33,9 @@ export default async function AdminLayout({
               <Link href="/admin/posts" className="px-3 py-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
                 Posts
               </Link>
+              <Link href="/admin/settings" className="px-3 py-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+                Settings
+              </Link>
             </nav>
           </div>
           <form
