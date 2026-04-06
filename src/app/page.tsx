@@ -11,11 +11,11 @@ export default function HomePage() {
       <section className="bg-[var(--color-soil-800)] text-white py-20 px-4 sm:px-6">
         <div className="max-w-[var(--max-w-content)] mx-auto text-center">
           <p className="text-[var(--color-harvest-400)] font-semibold text-sm uppercase tracking-widest mb-4">
-            Real Life. Real Food. Real Faith.
+            Think Deeply. Live Well.
           </p>
           <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6">
-            Grow Your Own,{" "}
-            <span className="text-[var(--color-sage-400)]">Live Simply</span>
+            Ideas That Take{" "}
+            <span className="text-[var(--color-sage-400)]">Root</span>
           </h1>
           <p className="text-white/80 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
             {siteConfig.description}
@@ -44,7 +44,7 @@ export default function HomePage() {
             What We Cover
           </h2>
           <p className="text-center text-[var(--color-soil-600)] mb-10 max-w-xl mx-auto">
-            Five areas of homestead life — practical skills you can start using today.
+            Five areas of thought — faith, money, mind, ideas, and science.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {niches.map((niche) => (
@@ -121,12 +121,12 @@ export default function HomePage() {
         <div className="max-w-2xl mx-auto text-center">
           <span className="text-4xl block mb-4">🌾</span>
           <h2 className="font-serif text-3xl font-bold text-[var(--color-soil-800)] mb-4">
-            This Place is for the Diggers
+            For the Curious and the Rooted
           </h2>
           <p className="text-[var(--color-soil-700)] leading-relaxed mb-6">
-            Whether you have a backyard plot or a half-acre, a beginner
-            question or a hard-earned harvest — you belong here. Good Soil
-            Harvest is built for people who want to do the work and live the life.
+            Good Soil Harvest is for people who want to think bigger — about
+            faith, money, the mind, the great ideas, and the world being
+            discovered. Plant good seeds. Think good thoughts. Grow.
           </p>
           <Link
             href="/about"

@@ -1,8 +1,8 @@
 export const siteConfig = {
   name: "Good Soil Harvest",
-  tagline: "Grow Food. Raise Animals. Preserve the Harvest. Live Simply.",
+  tagline: "Faith. Finance. Mind. Ideas. Science.",
   description:
-    "Practical guides for vegetable gardening, homestead animals, food preservation, frugal living, and faith-rooted homesteading.",
+    "Thoughtful writing on faith, money, psychology, philosophy, and science — for people who want to think deeply and live well.",
   url: "https://goodsoilharvest.com",
   handle: "@goodsoilharvest",
   locale: "en_US",
@@ -10,48 +10,48 @@ export const siteConfig = {
 
 export const niches = [
   {
-    slug: "vegetable-garden",
-    title: "Vegetable Garden",
-    shortTitle: "Gardening",
+    slug: "faith",
+    title: "Faith",
+    shortTitle: "Faith",
     description:
-      "From first seeds to harvest — practical guides for growing food at home.",
-    icon: "🥦",
-    color: "sage",
-  },
-  {
-    slug: "homestead-animals",
-    title: "Homestead Animals",
-    shortTitle: "Animals",
-    description:
-      "Chickens, goats, rabbits, and more — raising animals for eggs, milk, and meat.",
-    icon: "🐓",
+      "Exploring God, Scripture, theology, and what it means to live a life rooted in faith.",
+    icon: "✝️",
     color: "harvest",
   },
   {
-    slug: "food-preservation",
-    title: "Food Preservation",
-    shortTitle: "Preservation",
+    slug: "finance",
+    title: "Finance",
+    shortTitle: "Finance",
     description:
-      "Canning, fermenting, dehydrating, and freezing your harvest for year-round use.",
-    icon: "🫙",
-    color: "soil",
-  },
-  {
-    slug: "frugal-living",
-    title: "Frugal Living",
-    shortTitle: "Frugal Living",
-    description:
-      "Stretch every dollar — budgeting, DIY projects, and cutting costs without cutting quality.",
-    icon: "💰",
+      "Personal finance, economics, and building a life of generosity and financial freedom.",
+    icon: "📈",
     color: "sage",
   },
   {
-    slug: "deep-roots",
-    title: "Deep Roots",
-    shortTitle: "Deep Roots",
+    slug: "psychology",
+    title: "Psychology",
+    shortTitle: "Psychology",
     description:
-      "Faith, family, and the values that make a homestead more than just a property.",
-    icon: "🌱",
+      "The science of the mind — habits, behavior, mental health, and human nature.",
+    icon: "🧠",
+    color: "soil",
+  },
+  {
+    slug: "philosophy",
+    title: "Philosophy",
+    shortTitle: "Philosophy",
+    description:
+      "Big questions, ancient wisdom, and the ideas that have shaped how we think and live.",
+    icon: "📜",
+    color: "sage",
+  },
+  {
+    slug: "science",
+    title: "Science & Technology",
+    shortTitle: "Science",
+    description:
+      "Discoveries, innovations, and the big ideas reshaping our understanding of the world.",
+    icon: "🔬",
     color: "soil",
   },
 ] as const;
