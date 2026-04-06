@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { niches } from "@/lib/config";
 import Link from "next/link";
+import { MDXRemote } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
 import type { Metadata } from "next";
 
 const nicheMap = Object.fromEntries(niches.map((n) => [n.slug, n]));
@@ -36,8 +39,10 @@ export default async function PostPage({
     <div className="max-w-[var(--max-w-prose)] mx-auto px-4 sm:px-6 py-14">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-8">
-        <Link href="/blog" className="hover:text-[var(--foreground)] transition-colors">Blog</Link>
-        <span>›</span>
+        <Link href="/blog" className="hover:text-[var(--foreground)] transition-colors">
+          Blog
+        </Link>
+        <span className="opacity-40">›</span>
         <Link href={`/niches/${post.niche}`} className="hover:text-[var(--foreground)] transition-colors">
           {niche?.title ?? post.niche}
         </Link>
@@ -46,33 +51,46 @@ export default async function PostPage({
       {/* Header */}
       <header className="mb-10">
         <Link href={`/niches/${post.niche}`}>
-          <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-sage-600)] hover:underline">
+          <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-sage-500)] hover:text-[var(--color-harvest-500)] transition-colors">
             {niche?.icon} {niche?.title ?? post.niche}
           </span>
         </Link>
         <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[var(--foreground)] mt-3 mb-4 leading-tight">
           {post.title}
         </h1>
-        <p className="text-lg text-[var(--text-muted)] leading-relaxed">{post.description}</p>
-        <p className="text-sm text-[var(--text-muted)] opacity-60 mt-4">
+        <p className="text-lg text-[var(--text-muted)] leading-relaxed border-l-2 border-[var(--color-harvest-500)] pl-4">
+          {post.description}
+        </p>
+        <p className="text-sm text-[var(--text-muted)] opacity-50 mt-5">
           {post.publishedAt
-            ? new Date(post.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+            ? new Date(post.publishedAt).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })
             : ""}
         </p>
       </header>
 
       <hr className="border-[var(--border)] mb-10" />
 
-      {/* Content */}
-      <div
-        className="prose text-[var(--foreground)]"
-        dangerouslySetInnerHTML={{ __html: post.content }}
-      />
+      {/* Rendered markdown content */}
+      <article className="prose text-[var(--foreground)]">
+        <MDXRemote
+          source={post.content}
+          options={{
+            mdxOptions: {
+              remarkPlugins: [remarkGfm],
+              rehypePlugins: [rehypeSlug],
+            },
+          }}
+        />
+      </article>
 
       {/* Affiliate links */}
       {post.affiliateLinks.length > 0 && (
-        <aside className="mt-12 p-5 rounded-xl bg-[var(--surface-muted)] border border-[var(--border)]">
-          <h3 className="font-semibold text-sm uppercase tracking-wide text-[var(--text-muted)] mb-3">
+        <aside className="mt-14 p-6 rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)]">
+          <h3 className="font-semibold text-sm uppercase tracking-widest text-[var(--text-muted)] mb-4">
             Mentioned in this post
           </h3>
           <ul className="space-y-2">
@@ -82,16 +100,18 @@ export default async function PostPage({
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
-                  className="text-[var(--color-sage-600)] hover:text-[var(--color-harvest-600)] underline text-sm transition-colors"
+                  className="text-[var(--color-sage-500)] hover:text-[var(--color-harvest-500)] underline text-sm transition-colors"
                 >
                   {link.label}
                 </a>
               </li>
             ))}
           </ul>
-          <p className="text-xs text-[var(--text-muted)] opacity-60 mt-3">
+          <p className="text-xs text-[var(--text-muted)] opacity-50 mt-4">
             This post may contain affiliate links.{" "}
-            <Link href="/affiliate-disclosure" className="underline">Read our disclosure.</Link>
+            <Link href="/affiliate-disclosure" className="underline">
+              Read our disclosure.
+            </Link>
           </p>
         </aside>
       )}
