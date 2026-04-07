@@ -47,7 +47,7 @@ function SignInForm() {
       }
     }
 
-    router.push("/account");
+    router.push("/dashboard");
   }
 
   return (

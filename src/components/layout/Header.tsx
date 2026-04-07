@@ -18,12 +18,14 @@ export function Header() {
   const plan = session?.user?.subscriptionPlan as string | null | undefined;
   const isActive = session?.user?.subscriptionStatus === "ACTIVE";
 
+  const logoHref = isAuthed ? "/dashboard" : "/";
+
   return (
     <header className="bg-[var(--color-soil-800)] text-white sticky top-0 z-50 shadow-md">
       <div className="max-w-[var(--max-w-content)] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
+          <Link href={logoHref} className="flex items-center gap-2 shrink-0">
             <span className="text-[var(--color-harvest-400)] text-2xl">🌱</span>
             <span className="font-serif font-bold text-lg leading-tight">
               Good Soil{" "}
@@ -33,6 +35,14 @@ export function Header() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
+            {isAuthed && (
+              <Link
+                href="/dashboard"
+                className="px-3 py-1.5 rounded text-sm font-semibold text-[var(--color-harvest-300)] hover:text-white hover:bg-white/10 transition-colors"
+              >
+                My Feed
+              </Link>
+            )}
             {niches.map((niche) => (
               <Link
                 key={niche.slug}
@@ -54,11 +64,11 @@ export function Header() {
                   href="/account"
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-white/10 hover:bg-white/20 transition-colors"
                 >
-                  <span className="text-xs">👤</span>
+                  <span className="text-xs">⚙</span>
                   {plan && isActive ? (
-                    <span className="text-[var(--color-harvest-300)]">{planLabel[plan] ?? plan}</span>
+                    <span className="text-[var(--color-harvest-300)]">{planLabel[plan] ?? "Settings"}</span>
                   ) : (
-                    <span>Account</span>
+                    <span>Settings</span>
                   )}
                 </Link>
               ) : (
@@ -99,6 +109,15 @@ export function Header() {
         {/* Mobile menu */}
         {menuOpen && (
           <nav className="md:hidden py-3 border-t border-white/10 flex flex-col gap-1">
+            {isAuthed && (
+              <Link
+                href="/dashboard"
+                onClick={() => setMenuOpen(false)}
+                className="px-3 py-2 rounded text-sm font-semibold text-[var(--color-harvest-300)] hover:text-white hover:bg-white/10"
+              >
+                ✨ My Feed
+              </Link>
+            )}
             {niches.map((niche) => (
               <Link
                 key={niche.slug}
@@ -114,8 +133,8 @@ export function Header() {
             </Link>
             <div className="border-t border-white/10 mt-2 pt-2 flex flex-col gap-1">
               {isAuthed ? (
-                <Link href="/account" onClick={() => setMenuOpen(false)} className="px-3 py-2 rounded text-sm font-semibold text-[var(--color-harvest-300)] hover:bg-white/10">
-                  👤 {plan && isActive ? (planLabel[plan] ?? "Account") : "Account"}
+                <Link href="/account" onClick={() => setMenuOpen(false)} className="px-3 py-2 rounded text-sm font-semibold text-white/60 hover:bg-white/10">
+                  ⚙ {plan && isActive ? (planLabel[plan] ?? "Settings") : "Settings"}
                 </Link>
               ) : (
                 <>

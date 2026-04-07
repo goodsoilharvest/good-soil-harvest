@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -64,8 +64,154 @@ function PostCard({ post }: { post: Post }) {
   );
 }
 
-const TABS_PAID = ["For You", "Saved", "History", "Browse"] as const;
-const TABS_FREE = ["Browse"] as const;
+const QUICK_PROMPTS = [
+  "living with more purpose",
+  "managing money and anxiety",
+  "faith and doubt",
+  "understanding human behavior",
+  "ideas that changed history",
+];
+
+function DiscoverTab({ browse }: { browse: Post[] }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Post[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function search(q: string) {
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    setLoading(true);
+    setSearched(true);
+    try {
+      const res = await fetch("/api/ai-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: trimmed }),
+      });
+      const data = await res.json();
+      setResults(data.posts ?? []);
+    } catch {
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    search(query);
+  }
+
+  function handleQuickPrompt(prompt: string) {
+    setQuery(prompt);
+    search(prompt);
+    inputRef.current?.focus();
+  }
+
+  return (
+    <div>
+      {/* Search box */}
+      <div className="mb-10">
+        <p className="font-serif text-2xl font-bold text-[var(--foreground)] mb-1">
+          What&apos;s taking root in your mind?
+        </p>
+        <p className="text-sm text-[var(--text-muted)] mb-5">
+          Tell us what you&apos;re curious about and we&apos;ll find the right articles for you.
+        </p>
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="e.g. &quot;how to think about death&quot; or &quot;building wealth slowly&quot;"
+            className="flex-1 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-sm focus:outline-none focus:border-[var(--color-sage-400)] transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={loading || !query.trim()}
+            className="px-5 py-3 rounded-xl bg-[var(--color-sage-500)] text-white font-semibold text-sm hover:bg-[var(--color-sage-600)] transition-colors disabled:opacity-40 shrink-0"
+          >
+            {loading ? "…" : "Ask →"}
+          </button>
+        </form>
+
+        {/* Quick prompts */}
+        {!searched && (
+          <div className="flex flex-wrap gap-2 mt-4">
+            {QUICK_PROMPTS.map((p) => (
+              <button
+                key={p}
+                onClick={() => handleQuickPrompt(p)}
+                className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--color-sage-400)] hover:text-[var(--foreground)] transition-colors"
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center gap-3 py-10">
+          <span className="text-2xl animate-pulse">🌱</span>
+          <p className="text-[var(--text-muted)] text-sm">Searching the soil…</p>
+        </div>
+      )}
+
+      {/* AI results */}
+      {!loading && results !== null && (
+        <>
+          {results.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-[var(--text-muted)] text-sm mb-4">No close matches — try rephrasing your question.</p>
+              <button
+                onClick={() => { setResults(null); setSearched(false); setQuery(""); }}
+                className="text-sm text-[var(--color-sage-600)] hover:underline"
+              >
+                ← Start over
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide font-semibold">Best matches</p>
+                <button
+                  onClick={() => { setResults(null); setSearched(false); setQuery(""); }}
+                  className="text-xs text-[var(--color-sage-600)] hover:underline"
+                >
+                  ← New search
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+                {results.map(p => <PostCard key={p.id} post={p} />)}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {/* Browse all (shown before first search) */}
+      {!searched && (
+        <>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1 border-t border-[var(--border)]" />
+            <span className="text-xs text-[var(--text-muted)] uppercase tracking-wide">or browse all articles</span>
+            <div className="flex-1 border-t border-[var(--border)]" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {browse.map(p => <PostCard key={p.id} post={p} />)}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+const TABS_PAID = ["For You", "Saved", "History", "Discover"] as const;
 
 function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, browse, totalPosts }: Props) {
   const searchParams = useSearchParams();
@@ -74,7 +220,7 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
   const upgraded = searchParams.get("upgraded") === "1";
   const checkout  = searchParams.get("checkout");
 
-  const tabs = isPaid ? TABS_PAID : TABS_FREE;
+  const tabs = isPaid ? TABS_PAID : (["Discover"] as const);
   const [tab, setTab] = useState<string>(tabs[0]);
   const [syncing, setSyncing] = useState(false);
   const [syncDone, setSyncDone] = useState(false);
@@ -147,7 +293,7 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
       <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold text-[var(--foreground)]">
-            {isPaid ? "Your Reading Profile" : "Browse"}
+            {isPaid ? "Your Reading Profile" : "Discover"}
           </h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
             {isPaid
@@ -181,7 +327,7 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
         </div>
       )}
 
-      {/* Tab bar */}
+      {/* Tab bar — paid only (free users go straight to Discover) */}
       {isPaid && (
         <div className="flex gap-1 mb-8 border-b border-[var(--border)]">
           {tabs.map(t => (
@@ -211,11 +357,7 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
       )}
 
       {/* Tab content */}
-      {(!isPaid || tab === "Browse") && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {browse.map(p => <PostCard key={p.id} post={p} />)}
-        </div>
-      )}
+      {(!isPaid || tab === "Discover") && <DiscoverTab browse={browse} />}
 
       {isPaid && tab === "For You" && (
         suggestions.length === 0 ? (
@@ -223,20 +365,18 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
             <p className="text-5xl mb-4">📖</p>
             <p className="font-serif text-xl font-bold text-[var(--foreground)] mb-2">Start reading to get suggestions</p>
             <p className="text-[var(--text-muted)] text-sm mb-6">As you read and save articles, we&apos;ll learn what you like and surface more of it.</p>
-            <button onClick={() => setTab("Browse")} className="px-5 py-2.5 rounded-xl bg-[var(--color-sage-500)] text-white font-semibold text-sm hover:bg-[var(--color-sage-600)] transition-colors">
-              Browse all articles
+            <button onClick={() => setTab("Discover")} className="px-5 py-2.5 rounded-xl bg-[var(--color-sage-500)] text-white font-semibold text-sm hover:bg-[var(--color-sage-600)] transition-colors">
+              Discover articles
             </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {suggestions.map(p => <PostCard key={p.id} post={p} />)}
-            {suggestions.length > 0 && (
-              <div className="sm:col-span-2 lg:col-span-3 text-center pt-2">
-                <button onClick={() => setTab("Browse")} className="text-sm text-[var(--color-sage-600)] hover:underline">
-                  Browse all {totalPosts} articles →
-                </button>
-              </div>
-            )}
+            <div className="sm:col-span-2 lg:col-span-3 text-center pt-2">
+              <button onClick={() => setTab("Discover")} className="text-sm text-[var(--color-sage-600)] hover:underline">
+                Browse all {totalPosts} articles →
+              </button>
+            </div>
           </div>
         )
       )}
@@ -247,7 +387,7 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
             <p className="text-5xl mb-4">🔖</p>
             <p className="font-serif text-xl font-bold text-[var(--foreground)] mb-2">Nothing saved yet</p>
             <p className="text-[var(--text-muted)] text-sm mb-6">Hit the bookmark on any article to save it here.</p>
-            <button onClick={() => setTab("Browse")} className="px-5 py-2.5 rounded-xl bg-[var(--color-sage-500)] text-white font-semibold text-sm hover:bg-[var(--color-sage-600)] transition-colors">
+            <button onClick={() => setTab("Discover")} className="px-5 py-2.5 rounded-xl bg-[var(--color-sage-500)] text-white font-semibold text-sm hover:bg-[var(--color-sage-600)] transition-colors">
               Find something to save
             </button>
           </div>
@@ -264,7 +404,7 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
             <p className="text-5xl mb-4">📚</p>
             <p className="font-serif text-xl font-bold text-[var(--foreground)] mb-2">No reading history yet</p>
             <p className="text-[var(--text-muted)] text-sm mb-6">Articles you read will appear here.</p>
-            <button onClick={() => setTab("Browse")} className="px-5 py-2.5 rounded-xl bg-[var(--color-sage-500)] text-white font-semibold text-sm hover:bg-[var(--color-sage-600)] transition-colors">
+            <button onClick={() => setTab("Discover")} className="px-5 py-2.5 rounded-xl bg-[var(--color-sage-500)] text-white font-semibold text-sm hover:bg-[var(--color-sage-600)] transition-colors">
               Start reading
             </button>
           </div>
