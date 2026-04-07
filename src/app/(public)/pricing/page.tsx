@@ -68,8 +68,8 @@ export default function PricingPage() {
     });
 
     if (res.status === 401) {
-      // Not logged in — send to register with pricing as the return destination
-      router.push(`/register?redirect=/pricing`);
+      // Not logged in — send to register with the plan preloaded
+      router.push(`/register?plan=${planId}`);
       setLoading(null);
       return;
     }

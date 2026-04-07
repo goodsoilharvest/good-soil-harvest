@@ -8,30 +8,41 @@ import Link from "next/link";
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") ?? "/account";
+  const plan = searchParams.get("plan") ?? null;
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState("");
+  const [loading, setLoading]   = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    const result = await signIn("credentials", { email, password, redirect: false });
 
     if (result?.error) {
       setError("Invalid email or password.");
       setLoading(false);
-    } else {
-      router.push(redirect);
+      return;
     }
+
+    // If they came from a plan selection, go straight to Stripe
+    if (plan && (plan === "SEEDLING" || plan === "DEEP_ROOTS")) {
+      const checkout = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await checkout.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+    }
+
+    router.push("/account");
   }
 
   return (
@@ -43,11 +54,13 @@ function SignInForm() {
             Welcome back
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
-            Sign in to access your Good Soil membership.
+            {plan
+              ? "Sign in to continue to payment."
+              : "Sign in to access your Good Soil membership."}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-[var(--border)] shadow-sm p-8">
+        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
@@ -59,7 +72,7 @@ function SignInForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoFocus
-                className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:border-[var(--color-sage-400)] text-sm transition-colors"
+                className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] focus:outline-none focus:border-[var(--color-sage-400)] text-sm transition-colors"
               />
             </div>
 
@@ -72,7 +85,7 @@ function SignInForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:border-[var(--color-sage-400)] text-sm transition-colors"
+                className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] focus:outline-none focus:border-[var(--color-sage-400)] text-sm transition-colors"
               />
             </div>
 
@@ -92,8 +105,11 @@ function SignInForm() {
 
         <p className="text-center text-sm text-[var(--text-muted)] mt-6">
           {"Don't have an account? "}
-          <Link href="/pricing" className="text-[var(--color-sage-600)] hover:underline font-medium">
-            See membership plans
+          <Link
+            href={plan ? `/register?plan=${plan}` : "/pricing"}
+            className="text-[var(--color-sage-600)] hover:underline font-medium"
+          >
+            {plan ? "Create one first" : "See membership plans"}
           </Link>
         </p>
       </div>
