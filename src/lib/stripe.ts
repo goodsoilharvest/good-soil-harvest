@@ -1,18 +1,28 @@
 import Stripe from "stripe";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("Missing STRIPE_SECRET_KEY");
+// Lazy singleton — avoids throwing at module load time if env vars aren't set yet
+let _stripe: Stripe | null = null;
+export function getStripe(): Stripe {
+  if (!_stripe) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
+    _stripe = new Stripe(key, { apiVersion: "2025-03-31.basil" });
+  }
+  return _stripe;
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-03-31.basil",
+// Keep named export for backwards compat — resolved at call time, not import time
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    return (getStripe() as unknown as Record<string | symbol, unknown>)[prop];
+  },
 });
 
 export const PLANS = {
   SEEDLING: {
     name: "Seedling",
     price: 4.99,
-    priceId: process.env.STRIPE_PRICE_SEEDLING!,
+    get priceId() { return process.env.STRIPE_PRICE_SEEDLING ?? ""; },
     description: "All premium posts, unlimited reading across every category",
     features: [
       "Unlimited access to all premium articles",
@@ -24,7 +34,7 @@ export const PLANS = {
   DEEP_ROOTS: {
     name: "Deep Roots",
     price: 9.99,
-    priceId: process.env.STRIPE_PRICE_DEEP_ROOTS!,
+    get priceId() { return process.env.STRIPE_PRICE_DEEP_ROOTS ?? ""; },
     description: "Everything in Seedling, plus exclusive content and real-world resources",
     features: [
       "Everything in Seedling",
