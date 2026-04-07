@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
   // Determine where to land after sign-in.
   // If plan is present, hit the account page with ?checkout=PLAN so it
   // auto-fires Stripe checkout once the session is established.
-  const redirectTo = plan ? `/account?checkout=${plan}` : "/account";
+  const redirectTo = plan ? `/dashboard?checkout=${plan}` : "/dashboard";
 
   // server-side signIn throws NEXT_REDIRECT — that becomes the response.
   // The credentials authorize() function will validate + consume the token.

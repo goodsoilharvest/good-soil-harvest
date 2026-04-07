@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { niches, siteConfig } from "@/lib/config";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { auth } from "@/auth";
@@ -25,7 +26,8 @@ const SPROUTS = [
 
 export default async function HomePage() {
   const session = await auth();
-  const isAuthed = !!session?.user;
+  if (session?.user) redirect("/dashboard");
+  const isAuthed = false; // only reached by unauthenticated users
 
   return (
     <>

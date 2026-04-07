@@ -20,6 +20,8 @@ model User {
   updatedAt       DateTime  @updatedAt
   sessions        Session[]
   subscription    Subscription?
+  postLikes       PostLike[]
+  postViews       PostView[]
 }
 
 model Session {
@@ -80,6 +82,8 @@ model Post {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   affiliateLinks AffiliateLink[]
+  postLikes      PostLike[]
+  postViews      PostView[]
 }
 
 enum NicheSlug {
@@ -96,6 +100,28 @@ enum PostStatus {
   PUBLISHED   // live on site
   REJECTED    // denied in CMS
   ARCHIVED
+}
+
+// ─── Engagement ──────────────────────────────────────────────────────────────
+
+model PostLike {
+  id      String   @id @default(cuid())
+  userId  String
+  postId  String
+  likedAt DateTime @default(now())
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@unique([userId, postId])
+}
+
+model PostView {
+  id       String   @id @default(cuid())
+  userId   String
+  postId   String
+  viewedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post     Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@unique([userId, postId])
 }
 
 // ─── Agent Pipeline ──────────────────────────────────────────────────────────

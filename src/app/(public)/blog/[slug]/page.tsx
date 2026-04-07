@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import { auth } from "@/auth";
 import type { Metadata } from "next";
+import { LikeButton } from "@/components/LikeButton";
 
 const nicheMap = Object.fromEntries(niches.map((n) => [n.slug, n]));
 
@@ -40,11 +41,11 @@ export default async function PostPage({
   // isPremium posts: requires SEEDLING or DEEP_ROOTS active subscription
   // isDeepRoots posts: requires DEEP_ROOTS active subscription
   let accessGranted = true;
+  let isLiked = false;
+  const session = await auth();
+  const userId = session?.user?.id;
 
   if (post.isPremium || post.isDeepRoots) {
-    const session = await auth();
-    const userId = session?.user?.id;
-
     // Admins always have full access
     if (session?.user?.role === "ADMIN") {
       accessGranted = true;
@@ -59,6 +60,21 @@ export default async function PostPage({
       if (post.isDeepRoots && !isDeepRoots) accessGranted = false;
       else if (post.isPremium && !isSeedlingOrAbove) accessGranted = false;
     }
+  }
+
+  // Track view + check like status for authenticated users
+  if (userId && accessGranted) {
+    const [like] = await Promise.all([
+      prisma.postLike.findUnique({
+        where: { userId_postId: { userId, postId: post.id } },
+      }),
+      prisma.postView.upsert({
+        where: { userId_postId: { userId, postId: post.id } },
+        create: { userId, postId: post.id },
+        update: { viewedAt: new Date() },
+      }),
+    ]);
+    isLiked = !!like;
   }
 
   return (
@@ -125,7 +141,12 @@ export default async function PostPage({
             />
           </article>
 
-</>
+          {userId && (
+            <div className="mt-10 pt-8 border-t border-[var(--border)] flex items-center gap-3">
+              <LikeButton postId={post.id} initialLiked={isLiked} />
+            </div>
+          )}
+        </>
       ) : (
         <Paywall isDeepRoots={post.isDeepRoots} />
       )}
