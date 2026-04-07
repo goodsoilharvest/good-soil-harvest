@@ -7,33 +7,34 @@ const SITE = process.env.NEXTAUTH_URL ?? "https://goodsoilharvest.com";
 
 // ─── Verification email ───────────────────────────────────────────────────────
 
-export async function sendVerificationEmail(email: string, token: string) {
-  const link = `${SITE}/verify-email?token=${token}`;
-
+export async function sendVerificationEmail(email: string, code: string) {
   return resend.emails.send({
     from: FROM,
     to: email,
-    subject: "Verify your Good Soil Harvest email",
+    subject: `${code} is your Good Soil Harvest verification code`,
     html: `
       <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;padding:40px 24px;color:#2e1a0a;">
         <div style="text-align:center;margin-bottom:32px;">
           <span style="font-size:48px;">🌱</span>
           <h1 style="font-size:26px;font-weight:bold;margin:12px 0 4px;">Good Soil Harvest</h1>
-          <p style="color:#6b4423;font-size:14px;margin:0;">Verify your email address</p>
+          <p style="color:#6b4423;font-size:14px;margin:0;">Email verification</p>
         </div>
 
-        <p style="font-size:15px;line-height:1.6;margin-bottom:8px;">Thanks for joining. Click the button below to verify your email and activate your account.</p>
-        <p style="font-size:13px;color:#6b4423;margin-bottom:28px;">This link expires in 24 hours.</p>
+        <p style="font-size:15px;line-height:1.6;margin-bottom:24px;">
+          Enter this code to verify your email and activate your account:
+        </p>
 
         <div style="text-align:center;margin-bottom:32px;">
-          <a href="${link}" style="display:inline-block;background:#637f52;color:#fff;font-size:15px;font-weight:600;padding:14px 32px;border-radius:10px;text-decoration:none;">
-            Verify my email
-          </a>
+          <div style="display:inline-block;background:#f2ede2;border:2px solid #c4d9b4;border-radius:12px;padding:20px 40px;">
+            <span style="font-size:40px;font-weight:bold;letter-spacing:10px;color:#2e1a0a;font-family:monospace;">
+              ${code}
+            </span>
+          </div>
+          <p style="font-size:13px;color:#6b4423;margin-top:12px;">Expires in 30 minutes</p>
         </div>
 
         <p style="font-size:12px;color:#9a7a5a;text-align:center;">
-          If you didn't create an account, you can safely ignore this email.<br/>
-          Or copy this link: <a href="${link}" style="color:#637f52;">${link}</a>
+          If you didn't create an account, you can safely ignore this email.
         </p>
       </div>
     `,

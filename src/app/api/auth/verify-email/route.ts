@@ -2,20 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendWelcomeEmail } from "@/lib/email";
 
-export async function GET(req: NextRequest) {
-  const token = req.nextUrl.searchParams.get("token");
-  if (!token) {
-    return NextResponse.redirect(new URL("/verify-email?error=missing", req.url));
+export async function POST(req: NextRequest) {
+  const { email, code } = await req.json();
+
+  if (!email || !code) {
+    return NextResponse.json({ error: "Email and code are required" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({ where: { verifyToken: token } });
+  const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
-    return NextResponse.redirect(new URL("/verify-email?error=invalid", req.url));
+    return NextResponse.json({ error: "Invalid code" }, { status: 400 });
+  }
+
+  if (user.emailVerified) {
+    return NextResponse.json({ ok: true, alreadyVerified: true });
+  }
+
+  if (!user.verifyToken || user.verifyToken !== code.trim()) {
+    return NextResponse.json({ error: "Incorrect code — check your email and try again" }, { status: 400 });
   }
 
   if (user.verifyTokenExp && user.verifyTokenExp < new Date()) {
-    return NextResponse.redirect(new URL("/verify-email?error=expired", req.url));
+    return NextResponse.json({ error: "Code expired — request a new one below" }, { status: 400 });
   }
 
   await prisma.user.update({
@@ -23,8 +32,7 @@ export async function GET(req: NextRequest) {
     data: { emailVerified: true, verifyToken: null, verifyTokenExp: null },
   });
 
-  // Fire and forget welcome email
   sendWelcomeEmail(user.email).catch(console.error);
 
-  return NextResponse.redirect(new URL("/verify-email?success=1", req.url));
+  return NextResponse.json({ ok: true });
 }
