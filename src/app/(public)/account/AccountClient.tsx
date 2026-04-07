@@ -62,6 +62,22 @@ function AccountContent({ email, plan, status, currentPeriodEnd, bookDiscountCod
   const upgraded = searchParams.get("upgraded") === "1";
   const [portalLoading, setPortalLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  async function syncStripe() {
+    setSyncing(true);
+    setSyncMsg(null);
+    const res = await fetch("/api/account/sync-stripe", { method: "POST" });
+    const data = await res.json();
+    if (res.ok) {
+      setSyncMsg("Subscription synced! Refreshing…");
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      setSyncMsg(data.error ?? "Sync failed.");
+      setSyncing(false);
+    }
+  }
 
   const isActive = status === "ACTIVE";
   const planInfo = plan ? planLabels[plan] : null;
@@ -141,17 +157,32 @@ function AccountContent({ email, plan, status, currentPeriodEnd, bookDiscountCod
             </button>
           </div>
         ) : (
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <p className="font-semibold text-[var(--foreground)]">Free</p>
-              <p className="text-sm text-[var(--text-muted)]">Upgrade to unlock all premium content.</p>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <p className="font-semibold text-[var(--foreground)]">Free</p>
+                <p className="text-sm text-[var(--text-muted)]">Upgrade to unlock all premium content.</p>
+              </div>
+              <Link
+                href="/pricing"
+                className="px-4 py-2 rounded-lg bg-[var(--color-harvest-500)] text-white text-sm font-semibold hover:bg-[var(--color-harvest-600)] transition-colors"
+              >
+                See plans
+              </Link>
             </div>
-            <Link
-              href="/pricing"
-              className="px-4 py-2 rounded-lg bg-[var(--color-harvest-500)] text-white text-sm font-semibold hover:bg-[var(--color-harvest-600)] transition-colors"
-            >
-              See plans
-            </Link>
+            {/* Sync button — recovers subscriptions that paid but didn't link */}
+            <div className="pt-1">
+              <button
+                onClick={syncStripe}
+                disabled={syncing}
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--color-sage-600)] hover:underline disabled:opacity-50 transition-colors"
+              >
+                {syncing ? "Checking Stripe…" : "Already subscribed? Restore your membership →"}
+              </button>
+              {syncMsg && (
+                <p className="text-xs mt-1 text-[var(--color-sage-600)]">{syncMsg}</p>
+              )}
+            </div>
           </div>
         )}
       </div>

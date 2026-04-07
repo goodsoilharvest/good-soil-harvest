@@ -27,14 +27,26 @@ export async function POST(req: NextRequest) {
       const session = event.data.object as Stripe.Checkout.Session;
       if (session.mode !== "subscription") break;
 
-      const userId = session.metadata?.userId;
+      let userId = session.metadata?.userId;
       const plan = session.metadata?.plan as "SEEDLING" | "DEEP_ROOTS" | undefined;
       const customerId = session.customer as string;
       const subscriptionId = typeof session.subscription === "string"
         ? session.subscription
         : session.subscription?.id;
 
-      if (!userId || !subscriptionId) break;
+      if (!subscriptionId) break;
+
+      // Fallback: if userId missing from metadata, look up by customer email
+      if (!userId) {
+        const customer = await stripe.customers.retrieve(customerId);
+        const email = "deleted" in customer ? null : customer.email;
+        if (email) {
+          const user = await prisma.user.findUnique({ where: { email } });
+          userId = user?.id;
+        }
+      }
+
+      if (!userId) break;
 
       // Get period end from the first subscription item
       const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
