@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { findDuplicates } from "@/lib/duplicates";
 
 const nicheLabel: Record<string, string> = {
   faith: "Faith",
@@ -31,6 +32,14 @@ export default async function PostsPage({
     },
     orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
   });
+
+  // Compute duplicates across ALL posts (not just the filtered view) so
+  // the flag shows up regardless of which filter tab you're on.
+  const allPosts = await prisma.post.findMany({
+    select: { id: true, title: true },
+    orderBy: { createdAt: "asc" },
+  });
+  const dupeMap = findDuplicates(allPosts);
 
   const counts = await prisma.post.groupBy({
     by: ["status"],
@@ -97,37 +106,54 @@ export default async function PostsPage({
         </div>
       ) : (
         <div className="space-y-2">
-          {posts.map((post) => (
-            <Link
-              key={post.id}
-              href={`/admin/posts/${post.id}`}
-              className="flex items-center justify-between bg-white rounded-xl px-5 py-4 border border-[var(--color-sage-100)] hover:border-[var(--color-sage-300)] transition-colors group"
-            >
-              <div className="flex-1 min-w-0 mr-4">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-sage-600)]">
-                    {nicheLabel[post.niche] ?? post.niche}
-                  </span>
-                  {post.isPremium && (
-                    <span className="text-xs bg-[var(--color-harvest-100)] text-[var(--color-harvest-700)] px-2 py-0.5 rounded-full font-medium">
-                      Premium
+          {posts.map((post) => {
+            const dupeTitle = dupeMap.get(post.id);
+            return (
+              <Link
+                key={post.id}
+                href={`/admin/posts/${post.id}`}
+                className={`flex items-center justify-between bg-white rounded-xl px-5 py-4 border transition-colors group ${
+                  dupeTitle
+                    ? "border-yellow-300 hover:border-yellow-400"
+                    : "border-[var(--color-sage-100)] hover:border-[var(--color-sage-300)]"
+                }`}
+              >
+                <div className="flex-1 min-w-0 mr-4">
+                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-sage-600)]">
+                      {nicheLabel[post.niche] ?? post.niche}
                     </span>
+                    {post.isPremium && (
+                      <span className="text-xs bg-[var(--color-harvest-100)] text-[var(--color-harvest-700)] px-2 py-0.5 rounded-full font-medium">
+                        Premium
+                      </span>
+                    )}
+                    {dupeTitle && (
+                      <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-300 px-2 py-0.5 rounded-full font-medium" title={`Similar to: "${dupeTitle}"`}>
+                        ⚠ Possible duplicate
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-serif font-bold text-[var(--color-soil-800)] truncate group-hover:text-[var(--color-harvest-600)] transition-colors">
+                    {post.title}
+                  </h3>
+                  {dupeTitle && (
+                    <p className="text-xs text-yellow-700 mt-0.5 truncate">
+                      Similar to: &ldquo;{dupeTitle}&rdquo;
+                    </p>
                   )}
+                  <p className="text-xs text-[var(--color-soil-400)] mt-0.5">
+                    {post.publishedAt
+                      ? new Date(post.publishedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                      : `Updated ${new Date(post.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
+                  </p>
                 </div>
-                <h3 className="font-serif font-bold text-[var(--color-soil-800)] truncate group-hover:text-[var(--color-harvest-600)] transition-colors">
-                  {post.title}
-                </h3>
-                <p className="text-xs text-[var(--color-soil-400)] mt-0.5">
-                  {post.publishedAt
-                    ? new Date(post.publishedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                    : `Updated ${new Date(post.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
-                </p>
-              </div>
-              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${statusColors[post.status]}`}>
-                {post.status}
-              </span>
-            </Link>
-          ))}
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${statusColors[post.status]}`}>
+                  {post.status}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       )}
     </>
