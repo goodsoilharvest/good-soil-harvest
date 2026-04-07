@@ -2,10 +2,21 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { niches, siteConfig } from "@/lib/config";
+
+const planLabel: Record<string, string> = {
+  SEEDLING:   "🌱 Seedling",
+  DEEP_ROOTS: "🌾 Deep Roots",
+};
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { data: session, status } = useSession();
+
+  const isAuthed = status === "authenticated";
+  const plan = session?.user?.subscriptionPlan as string | null | undefined;
+  const isActive = session?.user?.subscriptionStatus === "ACTIVE";
 
   return (
     <header className="bg-[var(--color-soil-800)] text-white sticky top-0 z-50 shadow-md">
@@ -34,12 +45,39 @@ export function Header() {
             <Link href="/blog" className="px-3 py-1.5 rounded text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors">
               All Posts
             </Link>
-            <Link
-              href="/about"
-              className="ml-2 px-4 py-1.5 rounded-full text-sm font-semibold bg-[var(--color-harvest-500)] hover:bg-[var(--color-harvest-400)] transition-colors"
-            >
-              About
-            </Link>
+
+            <div className="flex items-center gap-2 ml-3 pl-3 border-l border-white/15">
+              {status === "loading" ? (
+                <div className="w-16 h-7 rounded-full bg-white/10 animate-pulse" />
+              ) : isAuthed ? (
+                <Link
+                  href="/account"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-white/10 hover:bg-white/20 transition-colors"
+                >
+                  <span className="text-xs">👤</span>
+                  {plan && isActive ? (
+                    <span className="text-[var(--color-harvest-300)]">{planLabel[plan] ?? plan}</span>
+                  ) : (
+                    <span>Account</span>
+                  )}
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-in"
+                    className="px-3 py-1.5 rounded text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/pricing"
+                    className="px-4 py-1.5 rounded-full text-sm font-semibold bg-[var(--color-harvest-500)] hover:bg-[var(--color-harvest-400)] transition-colors text-[var(--color-soil-900)]"
+                  >
+                    Get started
+                  </Link>
+                </>
+              )}
+            </div>
           </nav>
 
           {/* Mobile menu button */}
@@ -74,9 +112,22 @@ export function Header() {
             <Link href="/blog" onClick={() => setMenuOpen(false)} className="px-3 py-2 rounded text-sm font-medium text-white/80 hover:text-white hover:bg-white/10">
               All Posts
             </Link>
-            <Link href="/about" onClick={() => setMenuOpen(false)} className="px-3 py-2 rounded text-sm font-medium text-white/80 hover:text-white hover:bg-white/10">
-              About
-            </Link>
+            <div className="border-t border-white/10 mt-2 pt-2 flex flex-col gap-1">
+              {isAuthed ? (
+                <Link href="/account" onClick={() => setMenuOpen(false)} className="px-3 py-2 rounded text-sm font-semibold text-[var(--color-harvest-300)] hover:bg-white/10">
+                  👤 {plan && isActive ? (planLabel[plan] ?? "Account") : "Account"}
+                </Link>
+              ) : (
+                <>
+                  <Link href="/sign-in" onClick={() => setMenuOpen(false)} className="px-3 py-2 rounded text-sm font-medium text-white/80 hover:text-white hover:bg-white/10">
+                    Sign in
+                  </Link>
+                  <Link href="/pricing" onClick={() => setMenuOpen(false)} className="px-3 py-2 rounded text-sm font-semibold text-[var(--color-harvest-400)] hover:bg-white/10">
+                    Get started →
+                  </Link>
+                </>
+              )}
+            </div>
           </nav>
         )}
       </div>

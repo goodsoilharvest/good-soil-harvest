@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { niches, siteConfig } from "@/lib/config";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
+import { auth } from "@/auth";
 
 const SEEDS = [
   { left: "8%",  delay: "0.0s", dur: "9s",  size: 5 },
@@ -22,7 +23,10 @@ const SPROUTS = [
   { left: "79%", delay: "14.4s", dur: "3s"   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await auth();
+  const isAuthed = !!session?.user;
+
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────── */}
@@ -277,6 +281,117 @@ export default function HomePage() {
           </Link>
         </RevealOnScroll>
       </section>
+
+      {/* ── Membership / Personalized Profile teaser (unauthenticated only) ── */}
+      {!isAuthed && (
+        <section className="py-24 px-4 sm:px-6 bg-[var(--color-soil-800)]">
+          <div className="max-w-[var(--max-w-content)] mx-auto">
+            <RevealOnScroll className="text-center mb-16">
+              <p className="text-[var(--color-harvest-400)] text-xs font-semibold uppercase tracking-[0.2em] mb-4">
+                Membership
+              </p>
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white mb-4">
+                Your Own Corner of Good Soil
+              </h2>
+              <p className="text-white/60 max-w-2xl mx-auto text-lg leading-relaxed">
+                Members get a personalized reading experience — articles chosen for you,
+                saved reads, and a home page that gets smarter the more you explore.
+                Free trial included. No commitment.
+              </p>
+            </RevealOnScroll>
+
+            {/* Personalized profile preview placeholder */}
+            <RevealOnScroll className="mb-16">
+              <div className="max-w-3xl mx-auto rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+                <div className="px-6 py-5 border-b border-white/10 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[var(--color-sage-500)] flex items-center justify-center text-sm font-bold text-white">J</div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">Your reading profile</p>
+                    <p className="text-xs text-white/40">Personalized just for you</p>
+                  </div>
+                </div>
+                <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[
+                    { tab: "For You", icon: "✨", desc: "Articles picked based on what you read and save" },
+                    { tab: "Saved",   icon: "🔖", desc: "Your bookmarked reads in one place" },
+                    { tab: "History", icon: "📖", desc: "Everything you've read, easy to revisit" },
+                  ].map((item) => (
+                    <div key={item.tab} className="rounded-xl bg-white/5 border border-white/8 p-4 text-center">
+                      <div className="text-2xl mb-2">{item.icon}</div>
+                      <p className="text-sm font-semibold text-white mb-1">{item.tab}</p>
+                      <p className="text-xs text-white/50 leading-relaxed">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="px-6 pb-5 text-center">
+                  <p className="text-xs text-white/30 italic">Video preview coming soon</p>
+                </div>
+              </div>
+            </RevealOnScroll>
+
+            {/* Pricing cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {/* Free */}
+              <RevealOnScroll delay={1}>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-7 flex flex-col h-full">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-white/50 mb-3">Free</p>
+                  <p className="font-serif text-3xl font-bold text-white mb-1">$0</p>
+                  <p className="text-white/40 text-sm mb-6">Forever free</p>
+                  <ul className="space-y-2.5 text-sm text-white/70 flex-1 mb-8">
+                    {["Browse all free articles", "All 5 topic categories", "No account required"].map(f => (
+                      <li key={f} className="flex items-start gap-2"><span className="text-[var(--color-sage-400)] mt-0.5">✓</span>{f}</li>
+                    ))}
+                  </ul>
+                  <Link href="/blog" className="block text-center py-2.5 rounded-xl border border-white/20 text-white/80 text-sm font-semibold hover:bg-white/10 transition-colors">
+                    Start reading
+                  </Link>
+                </div>
+              </RevealOnScroll>
+
+              {/* Seedling — highlighted */}
+              <RevealOnScroll delay={2}>
+                <div className="rounded-2xl border-2 border-[var(--color-harvest-500)] bg-[var(--color-harvest-500)]/10 p-7 flex flex-col h-full relative">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--color-harvest-500)] text-[var(--color-soil-900)] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+                    Most popular
+                  </div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-harvest-400)] mb-3">🌱 Seedling</p>
+                  <p className="font-serif text-3xl font-bold text-white mb-1">$4.99<span className="text-lg font-normal text-white/50">/mo</span></p>
+                  <p className="text-white/40 text-sm mb-6">7-day free trial</p>
+                  <ul className="space-y-2.5 text-sm text-white/80 flex-1 mb-8">
+                    {["Everything in Free", "All premium articles", "Personalized homepage", "Saved & history tabs", "Article suggestions"].map(f => (
+                      <li key={f} className="flex items-start gap-2"><span className="text-[var(--color-harvest-400)] mt-0.5">✓</span>{f}</li>
+                    ))}
+                  </ul>
+                  <Link href="/register?plan=SEEDLING" className="block text-center py-2.5 rounded-xl bg-[var(--color-harvest-500)] hover:bg-[var(--color-harvest-400)] text-[var(--color-soil-900)] text-sm font-bold transition-colors">
+                    Try free for 7 days
+                  </Link>
+                </div>
+              </RevealOnScroll>
+
+              {/* Deep Roots */}
+              <RevealOnScroll delay={3}>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-7 flex flex-col h-full">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-sage-400)] mb-3">🌾 Deep Roots</p>
+                  <p className="font-serif text-3xl font-bold text-white mb-1">$9.99<span className="text-lg font-normal text-white/50">/mo</span></p>
+                  <p className="text-white/40 text-sm mb-6">7-day free trial</p>
+                  <ul className="space-y-2.5 text-sm text-white/70 flex-1 mb-8">
+                    {["Everything in Seedling", "Exclusive Deep Roots posts", "Early access to new content", "More perks coming soon"].map(f => (
+                      <li key={f} className="flex items-start gap-2"><span className="text-[var(--color-sage-400)] mt-0.5">✓</span>{f}</li>
+                    ))}
+                  </ul>
+                  <Link href="/register?plan=DEEP_ROOTS" className="block text-center py-2.5 rounded-xl border border-white/20 text-white/80 text-sm font-semibold hover:bg-white/10 transition-colors">
+                    Try free for 7 days
+                  </Link>
+                </div>
+              </RevealOnScroll>
+            </div>
+
+            <RevealOnScroll className="text-center mt-8">
+              <p className="text-white/30 text-xs">No commitment — cancel anytime during your trial and you won&apos;t be charged.</p>
+            </RevealOnScroll>
+          </div>
+        </section>
+      )}
     </>
   );
 }

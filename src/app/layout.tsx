@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Lora, Inter } from "next/font/google";
 import { siteConfig } from "@/lib/config";
+import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 const lora = Lora({
@@ -42,7 +43,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${lora.variable} ${inter.variable}`}>
       <body className="min-h-screen flex flex-col">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
       cancel_url: `${origin}/pricing`,
       metadata: { userId: session.user.id!, plan },
       subscription_data: {
+        trial_period_days: 7,
         metadata: { userId: session.user.id!, plan },
       },
     });
