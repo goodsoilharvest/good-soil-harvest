@@ -10,22 +10,50 @@ const planLabels: Record<string, { name: string; price: string; icon: string }> 
   DEEP_ROOTS: { name: "Deep Roots", price: "$9.99/mo", icon: "🌾" },
 };
 
+type PasswordStrength = { ok: boolean; label: string; color: string };
+
+function checkPassword(pw: string): { rules: { label: string; met: boolean }[]; strength: PasswordStrength } {
+  const rules = [
+    { label: "At least 8 characters",   met: pw.length >= 8 },
+    { label: "One uppercase letter",     met: /[A-Z]/.test(pw) },
+    { label: "One number",               met: /[0-9]/.test(pw) },
+    { label: "One special character",    met: /[^A-Za-z0-9]/.test(pw) },
+  ];
+  const passed = rules.filter(r => r.met).length;
+  const strength: PasswordStrength =
+    passed <= 1 ? { ok: false, label: "Weak",   color: "bg-red-400" } :
+    passed === 2 ? { ok: false, label: "Fair",   color: "bg-yellow-400" } :
+    passed === 3 ? { ok: false, label: "Good",   color: "bg-[var(--color-sage-400)]" } :
+                   { ok: true,  label: "Strong", color: "bg-[var(--color-sage-600)]" };
+  return { rules, strength };
+}
+
+function validateEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const plan = searchParams.get("plan") ?? null;  // SEEDLING | DEEP_ROOTS | null
+  const plan = searchParams.get("plan") ?? null;
 
-  const [email, setEmail]       = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError]       = useState("");
-  const [loading, setLoading]   = useState(false);
+  const [email, setEmail]             = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [password, setPassword]       = useState("");
+  const [pwTouched, setPwTouched]     = useState(false);
+  const [error, setError]             = useState("");
+  const [loading, setLoading]         = useState(false);
+
+  const emailValid = validateEmail(email);
+  const { rules, strength } = checkPassword(password);
+  const allRulesMet = rules.every(r => r.met);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!emailValid || !allRulesMet) return;
     setLoading(true);
     setError("");
 
-    // 1 — Create account
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -39,15 +67,13 @@ function RegisterForm() {
       return;
     }
 
-    // 2 — Auto sign-in
     const result = await signIn("credentials", { email, password, redirect: false });
     if (result?.error) {
-      setError("Account created but sign-in failed. Please sign in manually.");
+      setError("Account created but sign-in failed. Please sign in.");
       router.push(plan ? `/sign-in?plan=${plan}` : "/sign-in");
       return;
     }
 
-    // 3 — If a plan was selected, go straight to Stripe checkout
     if (plan && (plan === "SEEDLING" || plan === "DEEP_ROOTS")) {
       const checkout = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -76,48 +102,86 @@ function RegisterForm() {
           </h1>
           {selectedPlan ? (
             <p className="text-sm text-[var(--text-muted)]">
-              You&apos;re signing up for{" "}
+              Signing up for{" "}
               <span className="font-semibold text-[var(--foreground)]">
                 {selectedPlan.icon} {selectedPlan.name} — {selectedPlan.price}
               </span>
               . Payment info comes next.
             </p>
           ) : (
-            <p className="text-sm text-[var(--text-muted)]">
-              Free to join. Upgrade to a membership anytime.
-            </p>
+            <p className="text-sm text-[var(--text-muted)]">Free to join. Upgrade anytime.</p>
           )}
         </div>
 
         <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+
+            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                Email
+                Email address
               </label>
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
+                onBlur={() => setEmailTouched(true)}
                 required
                 autoFocus
-                className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] focus:outline-none focus:border-[var(--color-sage-400)] text-sm transition-colors"
+                placeholder="you@example.com"
+                className={`w-full px-4 py-2.5 rounded-lg border bg-[var(--surface)] focus:outline-none text-sm transition-colors
+                  ${emailTouched && !emailValid
+                    ? "border-red-400 focus:border-red-400"
+                    : "border-[var(--border)] focus:border-[var(--color-sage-400)]"
+                  }`}
               />
+              {emailTouched && !emailValid && (
+                <p className="text-xs text-red-500 mt-1">Enter a valid email address (e.g. name@example.com)</p>
+              )}
             </div>
 
+            {/* Password */}
             <div>
               <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                Password{" "}
-                <span className="text-[var(--text-muted)] font-normal">(min 8 characters)</span>
+                Password
               </label>
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
+                onBlur={() => setPwTouched(true)}
                 required
-                minLength={8}
+                placeholder="Min 8 chars, mixed case, number, symbol"
                 className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] focus:outline-none focus:border-[var(--color-sage-400)] text-sm transition-colors"
               />
+
+              {/* Strength bar */}
+              {password.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-[var(--border)] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${strength.color}`}
+                        style={{ width: `${(rules.filter(r => r.met).length / 4) * 100}%` }}
+                      />
+                    </div>
+                    <span className={`text-xs font-medium ${strength.ok ? "text-[var(--color-sage-600)]" : "text-[var(--text-muted)]"}`}>
+                      {strength.label}
+                    </span>
+                  </div>
+
+                  {pwTouched && (
+                    <ul className="space-y-1">
+                      {rules.map(rule => (
+                        <li key={rule.label} className={`flex items-center gap-1.5 text-xs ${rule.met ? "text-[var(--color-sage-600)]" : "text-[var(--text-muted)]"}`}>
+                          <span>{rule.met ? "✓" : "○"}</span>
+                          {rule.label}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
 
             {error && (
@@ -126,12 +190,14 @@ function RegisterForm() {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold text-sm hover:bg-[var(--color-harvest-600)] transition-colors disabled:opacity-50 mt-2"
+              disabled={loading || !emailValid || !allRulesMet}
+              className="w-full py-3 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold text-sm hover:bg-[var(--color-harvest-600)] transition-colors disabled:opacity-40"
             >
               {loading
-                ? selectedPlan ? "Creating account…" : "Creating account…"
-                : selectedPlan ? `Create account & continue to payment` : "Create account"}
+                ? "Creating account…"
+                : selectedPlan
+                  ? "Create account & continue to payment"
+                  : "Create account"}
             </button>
           </form>
         </div>

@@ -9,8 +9,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Email and password required" }, { status: 400 });
   }
 
-  if (password.length < 8) {
-    return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: "Enter a valid email address" }, { status: 400 });
+  }
+
+  const pwErrors = [];
+  if (password.length < 8)          pwErrors.push("at least 8 characters");
+  if (!/[A-Z]/.test(password))      pwErrors.push("one uppercase letter");
+  if (!/[0-9]/.test(password))      pwErrors.push("one number");
+  if (!/[^A-Za-z0-9]/.test(password)) pwErrors.push("one special character");
+  if (pwErrors.length) {
+    return NextResponse.json(
+      { error: `Password must contain: ${pwErrors.join(", ")}` },
+      { status: 400 }
+    );
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
