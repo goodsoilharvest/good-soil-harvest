@@ -16,7 +16,6 @@ export interface PostFrontmatter {
   image?: string;
   imageAlt?: string;
   featured?: boolean;
-  affiliate?: boolean; // flags posts with affiliate links for disclosure
 }
 
 export interface Post extends PostFrontmatter {

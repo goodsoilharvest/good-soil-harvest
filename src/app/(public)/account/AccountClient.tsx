@@ -131,6 +131,18 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
     setTimeout(() => setCopied(false), 2000);
   }
 
+  // Show loading screen while auto-redirecting to Stripe (no flash of account UI)
+  if (checkout) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <div className="text-center space-y-3">
+          <div className="text-4xl animate-pulse">🌱</div>
+          <p className="text-[var(--text-muted)] text-sm">Taking you to checkout…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-14 space-y-5">
 
@@ -314,21 +326,12 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
 
       {/* Account actions */}
       <Section title="Account">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link
-            href="/account/change-password"
-            className="text-sm text-[var(--foreground)] hover:text-[var(--color-sage-600)] transition-colors"
-          >
-            Change password
-          </Link>
-          <span className="hidden sm:block text-[var(--border)]">·</span>
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors text-left"
-          >
-            Sign out
-          </button>
-        </div>
+        <button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors text-left"
+        >
+          Sign out
+        </button>
       </Section>
 
     </div>

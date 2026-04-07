@@ -27,8 +27,7 @@ export default function PrivacyPage() {
         <h2>Third-Party Services</h2>
         <p>
           We use Vercel for hosting and Neon for our database. These services have their
-          own privacy policies. If you make a purchase through an affiliate link, the
-          retailer's privacy policy applies to that transaction.
+          own privacy policies.
         </p>
         <h2>Your Rights</h2>
         <p>

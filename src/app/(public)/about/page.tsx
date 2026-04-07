@@ -35,14 +35,6 @@ export default function AboutPage() {
           <Link href="/contact">contact page</Link>.
         </p>
 
-        <h2>A note on affiliate links</h2>
-        <p>
-          Some posts include affiliate links to books, tools, or resources we actually use.
-          If you buy something through one of those links, we may earn a small commission —
-          at no extra cost to you. We don't recommend things we wouldn't use ourselves.
-          For full details, read our{" "}
-          <Link href="/affiliate-disclosure">affiliate disclosure</Link>.
-        </p>
       </div>
     </div>
   );

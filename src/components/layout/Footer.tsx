@@ -58,19 +58,12 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
               <li><Link href="/disclaimer" className="hover:text-white transition-colors">Disclaimer</Link></li>
-              <li><Link href="/affiliate-disclosure" className="hover:text-white transition-colors">Affiliate Disclosure</Link></li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs">
+        <div className="border-t border-white/10 pt-6 text-xs">
           <p>© {year} Good Soil Harvest LLC. All rights reserved.</p>
-          <p className="text-center">
-            This site contains affiliate links.{" "}
-            <Link href="/affiliate-disclosure" className="underline hover:text-white">
-              Read our disclosure.
-            </Link>
-          </p>
         </div>
       </div>
     </footer>

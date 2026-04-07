@@ -29,7 +29,6 @@ export default async function PostPage({
   const { slug } = await params;
   const post = await prisma.post.findUnique({
     where: { slug, status: "PUBLISHED" },
-    include: { affiliateLinks: true },
   });
 
   if (!post) notFound();
@@ -123,35 +122,7 @@ export default async function PostPage({
             />
           </article>
 
-          {/* Affiliate links */}
-          {post.affiliateLinks.length > 0 && (
-            <aside className="mt-14 p-6 rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)]">
-              <h3 className="font-semibold text-sm uppercase tracking-widest text-[var(--text-muted)] mb-4">
-                Mentioned in this post
-              </h3>
-              <ul className="space-y-2">
-                {post.affiliateLinks.map((link) => (
-                  <li key={link.id}>
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer nofollow"
-                      className="text-[var(--color-sage-500)] hover:text-[var(--color-harvest-500)] underline text-sm transition-colors"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-              <p className="text-xs text-[var(--text-muted)] opacity-50 mt-4">
-                This post may contain affiliate links.{" "}
-                <Link href="/affiliate-disclosure" className="underline">
-                  Read our disclosure.
-                </Link>
-              </p>
-            </aside>
-          )}
-        </>
+</>
       ) : (
         <Paywall isDeepRoots={post.isDeepRoots} />
       )}
