@@ -12,7 +12,7 @@ const nicheMap = Object.fromEntries(niches.map((n) => [n.slug, n]));
 
 export default async function BlogPage() {
   const posts = await prisma.post.findMany({
-    where: { status: "PUBLISHED", isPremium: false },
+    where: { status: "PUBLISHED" },
     orderBy: { publishedAt: "desc" },
   });
 
@@ -38,11 +38,23 @@ export default async function BlogPage() {
               >
                 <div className="h-2 w-full" style={{ background: `var(--color-${niche?.color ?? "sage"}-500)` }} />
                 <div className="p-5">
-                  <Link href={`/niches/${post.niche}`}>
-                    <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-sage-600)] hover:underline">
-                      {niche?.title ?? post.niche}
-                    </span>
-                  </Link>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Link href={`/niches/${post.niche}`}>
+                      <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-sage-600)] hover:underline">
+                        {niche?.title ?? post.niche}
+                      </span>
+                    </Link>
+                    {post.isDeepRoots && (
+                      <span className="text-xs font-semibold text-[var(--color-harvest-600)] border border-[var(--color-harvest-300)] rounded-full px-2 py-0.5">
+                        🌾 Deep Roots
+                      </span>
+                    )}
+                    {post.isPremium && !post.isDeepRoots && (
+                      <span className="text-xs font-semibold text-[var(--color-sage-600)] border border-[var(--color-sage-300)] rounded-full px-2 py-0.5">
+                        🌱 Premium
+                      </span>
+                    )}
+                  </div>
                   <h2 className="font-serif text-lg font-bold text-[var(--foreground)] mt-1 mb-2 leading-snug">
                     <Link href={`/blog/${post.slug}`} className="hover:text-[var(--color-sage-600)] transition-colors">
                       {post.title}

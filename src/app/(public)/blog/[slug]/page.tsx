@@ -45,7 +45,10 @@ export default async function PostPage({
     const session = await auth();
     const userId = session?.user?.id;
 
-    if (!userId) {
+    // Admins always have full access
+    if (session?.user?.role === "ADMIN") {
+      accessGranted = true;
+    } else if (!userId) {
       accessGranted = false;
     } else {
       const sub = await prisma.subscription.findUnique({ where: { userId } });

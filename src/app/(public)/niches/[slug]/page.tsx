@@ -25,7 +25,7 @@ export default async function NichePage({
   if (!niche) notFound();
 
   const posts = await prisma.post.findMany({
-    where: { niche: niche.slug as "faith" | "finance" | "psychology" | "philosophy" | "science", status: "PUBLISHED", isPremium: false },
+    where: { niche: niche.slug as "faith" | "finance" | "psychology" | "philosophy" | "science", status: "PUBLISHED" },
     orderBy: { publishedAt: "desc" },
   });
 
@@ -47,6 +47,18 @@ export default async function NichePage({
               key={post.id}
               className="bg-[var(--surface)] rounded-2xl p-6 border border-[var(--border)] hover:border-[var(--color-sage-400)] transition-colors shadow-sm"
             >
+              <div className="flex items-center gap-2 mb-2">
+                {post.isDeepRoots && (
+                  <span className="text-xs font-semibold text-[var(--color-harvest-600)] border border-[var(--color-harvest-300)] rounded-full px-2 py-0.5">
+                    🌾 Deep Roots
+                  </span>
+                )}
+                {post.isPremium && !post.isDeepRoots && (
+                  <span className="text-xs font-semibold text-[var(--color-sage-600)] border border-[var(--color-sage-300)] rounded-full px-2 py-0.5">
+                    🌱 Premium
+                  </span>
+                )}
+              </div>
               <h2 className="font-serif text-xl font-bold text-[var(--foreground)] mb-2 leading-snug">
                 <Link href={`/blog/${post.slug}`} className="hover:text-[var(--color-sage-600)] transition-colors">
                   {post.title}
@@ -58,7 +70,7 @@ export default async function NichePage({
                   {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : ""}
                 </p>
                 <Link href={`/blog/${post.slug}`} className="text-sm font-semibold text-[var(--color-sage-600)] hover:text-[var(--color-harvest-600)] transition-colors">
-                  Read →
+                  {post.isPremium || post.isDeepRoots ? "Preview →" : "Read →"}
                 </Link>
               </div>
             </article>
