@@ -107,13 +107,13 @@ export default async function PostsPage({
       ) : (
         <div className="space-y-2">
           {posts.map((post) => {
-            const dupeTitle = dupeMap.get(post.id);
+            const dupe = dupeMap.get(post.id);
             return (
               <Link
                 key={post.id}
                 href={`/admin/posts/${post.id}`}
                 className={`flex items-center justify-between bg-white rounded-xl px-5 py-4 border transition-colors group ${
-                  dupeTitle
+                  dupe
                     ? "border-yellow-300 hover:border-yellow-400"
                     : "border-[var(--color-sage-100)] hover:border-[var(--color-sage-300)]"
                 }`}
@@ -128,8 +128,8 @@ export default async function PostsPage({
                         Premium
                       </span>
                     )}
-                    {dupeTitle && (
-                      <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-300 px-2 py-0.5 rounded-full font-medium" title={`Similar to: "${dupeTitle}"`}>
+                    {dupe && (
+                      <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-300 px-2 py-0.5 rounded-full font-medium" title={`Shares topic word "${dupe.matchedWord}" with: "${dupe.matchTitle}"`}>
                         ⚠ Possible duplicate
                       </span>
                     )}
@@ -137,9 +137,9 @@ export default async function PostsPage({
                   <h3 className="font-serif font-bold text-[var(--color-soil-800)] truncate group-hover:text-[var(--color-harvest-600)] transition-colors">
                     {post.title}
                   </h3>
-                  {dupeTitle && (
+                  {dupe && (
                     <p className="text-xs text-yellow-700 mt-0.5 truncate">
-                      Similar to: &ldquo;{dupeTitle}&rdquo;
+                      Topic &ldquo;{dupe.matchedWord}&rdquo; also in: &ldquo;{dupe.matchTitle}&rdquo;
                     </p>
                   )}
                   <p className="text-xs text-[var(--color-soil-400)] mt-0.5">
