@@ -40,8 +40,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     jwt({ token, user }) {
       if (user) {
-        const u = user as { id?: string; role?: string; subscriptionPlan?: string | null; subscriptionStatus?: string | null };
-        token.id = u.id;
+        // token.sub is automatically set to user.id by NextAuth
+        const u = user as { role?: string; subscriptionPlan?: string | null; subscriptionStatus?: string | null };
         token.role = u.role;
         token.subscriptionPlan = u.subscriptionPlan ?? null;
         token.subscriptionStatus = u.subscriptionStatus ?? null;
@@ -49,7 +49,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     session({ session, token }) {
-      if (token.id) session.user.id = token.id as string;
+      // token.sub holds the user id (set automatically by NextAuth)
+      if (token.sub) session.user.id = token.sub;
       if (token.role) session.user.role = token.role as string;
       session.user.subscriptionPlan = (token.subscriptionPlan as string | null) ?? null;
       session.user.subscriptionStatus = (token.subscriptionStatus as string | null) ?? null;
