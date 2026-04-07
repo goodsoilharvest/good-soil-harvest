@@ -74,20 +74,8 @@ function RegisterForm() {
       return;
     }
 
-    if (plan && (plan === "SEEDLING" || plan === "DEEP_ROOTS")) {
-      const checkout = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
-      const checkoutData = await checkout.json();
-      if (checkoutData.url) {
-        window.location.href = checkoutData.url;
-        return;
-      }
-    }
-
-    router.push("/account");
+    // Always send to verify-email first — checkout blocks unverified accounts
+    router.push(`/verify-email?email=${encodeURIComponent(email)}${plan ? `&plan=${plan}` : ""}`);
   }
 
   const selectedPlan = plan ? planLabels[plan] : null;

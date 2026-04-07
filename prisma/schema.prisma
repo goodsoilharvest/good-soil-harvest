@@ -9,14 +9,17 @@ datasource db {
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  passwordHash  String?
-  role          Role      @default(SUBSCRIBER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  subscription  Subscription?
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String?
+  role            Role      @default(SUBSCRIBER)
+  emailVerified   Boolean   @default(false)
+  verifyToken     String?   @unique
+  verifyTokenExp  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  sessions        Session[]
+  subscription    Subscription?
 }
 
 model Session {

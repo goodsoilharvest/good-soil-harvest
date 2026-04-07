@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendVerificationEmail } from "@/lib/email";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 
 export async function POST(req: NextRequest) {
   const { email, password } = await req.json();
@@ -14,9 +16,9 @@ export async function POST(req: NextRequest) {
   }
 
   const pwErrors = [];
-  if (password.length < 8)          pwErrors.push("at least 8 characters");
-  if (!/[A-Z]/.test(password))      pwErrors.push("one uppercase letter");
-  if (!/[0-9]/.test(password))      pwErrors.push("one number");
+  if (password.length < 8)             pwErrors.push("at least 8 characters");
+  if (!/[A-Z]/.test(password))         pwErrors.push("one uppercase letter");
+  if (!/[0-9]/.test(password))         pwErrors.push("one number");
   if (!/[^A-Za-z0-9]/.test(password)) pwErrors.push("one special character");
   if (pwErrors.length) {
     return NextResponse.json(
@@ -31,9 +33,22 @@ export async function POST(req: NextRequest) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
+  const token = randomBytes(32).toString("hex");
+  const exp = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
+
   await prisma.user.create({
-    data: { email, passwordHash, role: "SUBSCRIBER" },
+    data: {
+      email,
+      passwordHash,
+      role: "SUBSCRIBER",
+      emailVerified: false,
+      verifyToken: token,
+      verifyTokenExp: exp,
+    },
   });
+
+  // Send verification email — don't block registration if it fails
+  sendVerificationEmail(email, token).catch(console.error);
 
   return NextResponse.json({ ok: true });
 }

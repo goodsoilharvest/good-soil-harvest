@@ -35,6 +35,11 @@ function SignInForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan }),
       });
+      if (checkout.status === 403) {
+        // Email not verified — send them to verify first
+        router.push(`/verify-email?email=${encodeURIComponent(email)}&plan=${plan}`);
+        return;
+      }
       const data = await checkout.json();
       if (data.url) {
         window.location.href = data.url;

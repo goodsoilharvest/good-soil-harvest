@@ -74,6 +74,14 @@ export default function PricingPage() {
       return;
     }
 
+    if (res.status === 403) {
+      const data = await res.json();
+      // Account not verified — send to verify page
+      router.push(`/verify-email?email=${encodeURIComponent(data.email ?? "")}&plan=${planId}`);
+      setLoading(null);
+      return;
+    }
+
     const data = await res.json();
     if (data.url) {
       window.location.href = data.url;

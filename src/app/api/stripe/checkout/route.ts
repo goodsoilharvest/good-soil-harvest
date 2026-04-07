@@ -10,6 +10,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Block unverified accounts from subscribing
+    const user = await prisma.user.findUnique({ where: { id: session.user.id! } });
+    if (user && !user.emailVerified) {
+      return NextResponse.json(
+        { error: "unverified", email: session.user.email },
+        { status: 403 }
+      );
+    }
+
     const { plan } = (await req.json()) as { plan: PlanKey };
     if (!PLANS[plan]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
