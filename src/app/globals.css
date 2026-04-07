@@ -88,6 +88,53 @@ h1, h2, h3, h4 { font-family: var(--font-serif); }
   font-style: italic;
   margin: 1.75rem 0;
 }
+.prose strong { color: var(--foreground); }
+
+/* ── Sources / Footnotes ───────────────────────────────────── */
+/* Targets the **Sources** bold heading + the list that follows */
+.prose hr + p strong,
+.prose hr ~ p strong:first-child {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+}
+.prose hr {
+  border-color: var(--border);
+  margin: 2.5rem 0 1.5rem;
+}
+/* Superscript citation numbers inline */
+.prose sup,
+.prose p > a[href^="#"]:not([class]) {
+  font-size: 0.7em;
+  vertical-align: super;
+  color: var(--color-harvest-500);
+  text-decoration: none;
+  font-weight: 600;
+}
+/* Sources section wrapper — the hr+content block */
+.prose .sources,
+.prose hr ~ * {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+.prose hr ~ p a,
+.prose hr ~ ul a {
+  color: var(--color-sage-500);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose hr ~ p a:hover,
+.prose hr ~ ul a:hover {
+  color: var(--color-harvest-500);
+}
+/* Unicode superscripts ¹ ² ³ ⁴ ⁵ rendered inline */
+.prose p > sup { color: var(--color-harvest-500); font-weight: 600; }
 
 /* ── Animations ────────────────────────────────────────── */
 @keyframes fadeInUp {
