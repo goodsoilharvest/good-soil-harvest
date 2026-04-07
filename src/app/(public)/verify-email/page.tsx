@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 
 function VerifyEmailContent() {
@@ -60,10 +61,37 @@ function VerifyEmailContent() {
 
     if (res.ok) {
       setVerified(true);
-      // Small delay so they see the success state, then navigate
-      setTimeout(() => {
-        router.push(plan ? `/sign-in?plan=${plan}` : "/sign-in");
-      }, 1500);
+
+      // Auto-sign-in using the one-time login token returned by the API
+      const loginToken = data.loginToken as string | undefined;
+      if (loginToken) {
+        const result = await signIn("credentials", {
+          email,
+          loginToken,
+          redirect: false,
+        });
+
+        if (result?.ok && plan) {
+          // Go straight to Stripe checkout
+          const checkoutRes = await fetch("/api/stripe/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan }),
+          });
+          const checkoutData = await checkoutRes.json();
+          if (checkoutData.url) {
+            window.location.href = checkoutData.url;
+            return;
+          }
+        }
+        // No plan or checkout failed — go to account
+        router.push("/account");
+      } else {
+        // Fallback: no login token, send to sign-in
+        setTimeout(() => {
+          router.push(plan ? `/sign-in?plan=${plan}` : "/sign-in");
+        }, 1500);
+      }
     } else {
       setError(data.error ?? "Incorrect code. Please try again.");
       setDigits(["", "", "", "", "", ""]);
@@ -94,7 +122,7 @@ function VerifyEmailContent() {
           <div className="text-5xl">✓</div>
           <h1 className="font-serif text-3xl font-bold text-[var(--foreground)]">Verified!</h1>
           <p className="text-[var(--text-muted)]">
-            {plan ? "Taking you to payment…" : "Redirecting you to sign in…"}
+            {plan ? "Taking you to payment…" : "Taking you to your account…"}
           </p>
         </div>
       </div>

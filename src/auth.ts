@@ -9,23 +9,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        loginToken: { label: "Login Token", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email) return null;
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
           include: { subscription: true },
         });
 
-        if (!user || !user.passwordHash) return null;
+        if (!user) return null;
 
-        const valid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash
-        );
-
-        if (!valid) return null;
+        // One-time login token path (post-email-verification auto-login)
+        if (credentials.loginToken) {
+          if (
+            !user.verifyToken ||
+            user.verifyToken !== (credentials.loginToken as string) ||
+            !user.verifyTokenExp ||
+            user.verifyTokenExp < new Date()
+          ) {
+            return null;
+          }
+          // Consume the token
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { verifyToken: null, verifyTokenExp: null },
+          });
+        } else {
+          // Normal password path
+          if (!credentials.password || !user.passwordHash) return null;
+          const valid = await bcrypt.compare(
+            credentials.password as string,
+            user.passwordHash
+          );
+          if (!valid) return null;
+        }
 
         return {
           id: user.id,
