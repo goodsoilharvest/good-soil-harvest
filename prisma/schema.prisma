@@ -37,15 +37,16 @@ enum Role {
 // ─── Subscriptions ───────────────────────────────────────────────────────────
 
 model Subscription {
-  id                   String             @id @default(cuid())
-  userId               String             @unique
-  stripeCustomerId     String?            @unique
-  stripeSubscriptionId String?            @unique
-  status               SubscriptionStatus @default(FREE)
+  id                   String              @id @default(cuid())
+  userId               String              @unique
+  stripeCustomerId     String?             @unique
+  stripeSubscriptionId String?             @unique
+  status               SubscriptionStatus  @default(FREE)
+  plan                 SubscriptionPlan?
   currentPeriodEnd     DateTime?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum SubscriptionStatus {
@@ -53,6 +54,11 @@ enum SubscriptionStatus {
   ACTIVE
   PAST_DUE
   CANCELED
+}
+
+enum SubscriptionPlan {
+  SEEDLING    // $4.99 — all premium posts, unlimited reading
+  DEEP_ROOTS  // $9.99 — everything + book discount + exclusive posts
 }
 
 // ─── Content ─────────────────────────────────────────────────────────────────
@@ -64,8 +70,9 @@ model Post {
   description String
   content     String     // MDX content
   niche       NicheSlug
-  isPremium   Boolean    @default(false)
-  status      PostStatus @default(DRAFT)
+  isPremium      Boolean    @default(false)
+  isDeepRoots    Boolean    @default(false)  // exclusive Deep Roots content
+  status         PostStatus @default(DRAFT)
   publishedAt DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
