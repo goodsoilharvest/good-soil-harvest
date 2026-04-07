@@ -46,6 +46,8 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
   const router = useRouter();
   const upgraded = searchParams.get("upgraded") === "1";
 
+  const checkout = searchParams.get("checkout");
+
   const [portalLoading, setPortalLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -53,6 +55,23 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
 
   const isActive = status === "ACTIVE";
   const info = plan ? planInfo[plan] : null;
+
+  // Auto-fire Stripe checkout after post-verification auto-login
+  useEffect(() => {
+    if (!checkout) return;
+    fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: checkout }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.url) window.location.href = data.url;
+        else router.replace("/pricing");
+      })
+      .catch(() => router.replace("/pricing"));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-sync when landing from a successful Stripe checkout
   useEffect(() => {

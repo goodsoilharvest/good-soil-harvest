@@ -1,13 +1,11 @@
 "use client";
 
 import { Suspense, useState, useRef } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const email = searchParams.get("email") ?? "";
   const plan  = searchParams.get("plan")  ?? "";
 
@@ -62,36 +60,16 @@ function VerifyEmailContent() {
     if (res.ok) {
       setVerified(true);
 
-      // Auto-sign-in using the one-time login token returned by the API
+      // Build auto-login URL — server-side route signs user in and redirects
+      // to /account?checkout=PLAN (which auto-fires Stripe) or just /account
       const loginToken = data.loginToken as string | undefined;
-      if (loginToken) {
-        const result = await signIn("credentials", {
-          email,
-          loginToken,
-          redirect: false,
-        });
+      const params = new URLSearchParams({ email });
+      if (loginToken) params.set("token", loginToken);
+      if (plan) params.set("plan", plan);
 
-        if (result?.ok && plan) {
-          // Go straight to Stripe checkout
-          const checkoutRes = await fetch("/api/stripe/checkout", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ plan }),
-          });
-          const checkoutData = await checkoutRes.json();
-          if (checkoutData.url) {
-            window.location.href = checkoutData.url;
-            return;
-          }
-        }
-        // No plan or checkout failed — go to account
-        router.push("/account");
-      } else {
-        // Fallback: no login token, send to sign-in
-        setTimeout(() => {
-          router.push(plan ? `/sign-in?plan=${plan}` : "/sign-in");
-        }, 1500);
-      }
+      setTimeout(() => {
+        window.location.href = `/api/auth/auto-login?${params}`;
+      }, 1200);
     } else {
       setError(data.error ?? "Incorrect code. Please try again.");
       setDigits(["", "", "", "", "", ""]);
