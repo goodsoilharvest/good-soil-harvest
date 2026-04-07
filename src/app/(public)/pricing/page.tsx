@@ -68,7 +68,9 @@ export default function PricingPage() {
     });
 
     if (res.status === 401) {
-      router.push(`/sign-in?redirect=/pricing`);
+      // Not logged in — send to register with pricing as the return destination
+      router.push(`/register?redirect=/pricing`);
+      setLoading(null);
       return;
     }
 
@@ -76,7 +78,7 @@ export default function PricingPage() {
     if (data.url) {
       window.location.href = data.url;
     } else {
-      alert("Something went wrong. Please try again.");
+      alert(data.error ?? "Something went wrong. Please try again.");
       setLoading(null);
     }
   }
@@ -102,7 +104,7 @@ export default function PricingPage() {
           <div
             id={plan.anchor}
             key={plan.id}
-            className={`relative rounded-2xl border bg-white p-8 ${plan.borderClass} flex flex-col`}
+            className={`relative rounded-2xl border bg-[var(--surface)] p-8 ${plan.borderClass} flex flex-col`}
           >
             {plan.featured && (
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
