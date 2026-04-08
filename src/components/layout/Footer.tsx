@@ -56,6 +56,7 @@ export function Footer() {
               Legal
             </h3>
             <ul className="space-y-2 text-sm">
+              <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
               <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
               <li><Link href="/disclaimer" className="hover:text-white transition-colors">Disclaimer</Link></li>
             </ul>

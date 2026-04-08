@@ -41,16 +41,27 @@ const nicheLabels: Record<string, string> = {
   philosophy: "Philosophy", science: "Science & Tech",
 };
 
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+function isNew(publishedAt: Date | null): boolean {
+  if (!publishedAt) return false;
+  return Date.now() - new Date(publishedAt).getTime() < SEVEN_DAYS_MS;
+}
+
 function PostCard({ post }: { post: Post }) {
+  const fresh = isNew(post.publishedAt);
   return (
     <Link
       href={`/blog/${post.slug}`}
       className="group bg-[var(--surface)] rounded-2xl p-5 border border-[var(--border)] hover:border-[var(--color-sage-400)] transition-colors block"
     >
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
         <span className={`text-xs font-semibold uppercase tracking-wide ${nicheColors[post.niche] ?? ""}`}>
           {nicheLabels[post.niche] ?? post.niche}
         </span>
+        {fresh && (
+          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">NEW</span>
+        )}
         {post.isDeepRoots && (
           <span className="text-xs font-semibold text-[var(--color-harvest-600)] border border-[var(--color-harvest-300)] rounded-full px-2 py-0.5">🌾 Deep Roots</span>
         )}
@@ -138,6 +149,82 @@ const QUICK_PROMPTS = [
 ];
 
 type Tab = "For You" | "Saved" | "History" | "Discover";
+
+const ONBOARDING_KEY = "gs_onboarded_v1";
+
+function OnboardingCard({ isPaid, isDeepRoots }: { isPaid: boolean; isDeepRoots: boolean }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem(ONBOARDING_KEY)) setVisible(true);
+  }, []);
+
+  function dismiss() {
+    localStorage.setItem(ONBOARDING_KEY, "1");
+    setVisible(false);
+  }
+
+  if (!visible) return null;
+
+  const steps = [
+    {
+      icon: "📖",
+      title: "Browse free articles",
+      body: "Every niche has free content available — no subscription needed.",
+    },
+    ...(isPaid ? [{
+      icon: "✨",
+      title: "Your feed learns you",
+      body: "Like and read articles to train your personal \"For You\" tab.",
+    }] : [{
+      icon: "🌱",
+      title: "Unlock premium content",
+      body: "Upgrade for unlimited premium articles and a personalized feed.",
+    }]),
+    ...(isDeepRoots ? [{
+      icon: "🔍",
+      title: "Try AI search",
+      body: "Use the search bar to ask anything — your Deep Roots perk.",
+    }] : []),
+  ];
+
+  return (
+    <div className="mb-6 rounded-2xl border border-[var(--color-sage-200)] bg-[var(--color-sage-50)] p-6">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h2 className="font-serif text-lg font-bold text-[var(--foreground)]">Welcome to Good Soil Harvest 🌱</h2>
+          <p className="text-sm text-[var(--text-muted)] mt-0.5">Here&apos;s how to get started:</p>
+        </div>
+        <button
+          onClick={dismiss}
+          className="text-[var(--text-muted)] hover:text-[var(--foreground)] text-lg leading-none mt-0.5 shrink-0"
+          aria-label="Dismiss"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+        {steps.map(step => (
+          <div key={step.title} className="flex items-start gap-3 rounded-xl bg-white/70 border border-[var(--border)] p-3.5">
+            <span className="text-xl shrink-0">{step.icon}</span>
+            <div>
+              <p className="text-sm font-semibold text-[var(--foreground)]">{step.title}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5 leading-relaxed">{step.body}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={dismiss}
+        className="px-5 py-2 rounded-xl bg-[var(--color-sage-600)] text-white text-sm font-semibold hover:bg-[var(--color-sage-700)] transition-colors"
+      >
+        Got it, let&apos;s go!
+      </button>
+    </div>
+  );
+}
 
 function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, liked, history, browse, totalPosts, trialEnd }: Props) {
   const searchParams = useSearchParams();
@@ -253,6 +340,9 @@ function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, like
 
   return (
     <div className="max-w-[var(--max-w-content)] mx-auto px-4 sm:px-6 py-10">
+
+      {/* First-visit onboarding */}
+      <OnboardingCard isPaid={isPaid} isDeepRoots={isDeepRoots} />
 
       {/* Sync spinner */}
       {upgraded && syncing && (

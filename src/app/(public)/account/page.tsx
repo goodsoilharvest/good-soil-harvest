@@ -20,11 +20,6 @@ export default async function AccountPage() {
       plan={sub?.plan ?? null}
       status={sub?.status ?? "FREE"}
       currentPeriodEnd={sub?.currentPeriodEnd?.toISOString() ?? null}
-      bookDiscountCode={
-        sub?.plan === "DEEP_ROOTS" && sub?.status === "ACTIVE"
-          ? (process.env.DEEP_ROOTS_BOOK_CODE ?? null)
-          : null
-      }
     />
   );
 }

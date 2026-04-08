@@ -12,7 +12,6 @@ type Props = {
   plan: "SEEDLING" | "DEEP_ROOTS" | null;
   status: string;
   currentPeriodEnd: string | null;
-  bookDiscountCode: string | null;
 };
 
 const planInfo = {
@@ -81,6 +80,13 @@ function AccountDropdown() {
           </Link>
           <div className="border-t border-[var(--border)] my-1" />
           <Link
+            href="/terms"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)] transition-colors"
+          >
+            Terms of Service
+          </Link>
+          <Link
             href="/privacy"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)] transition-colors"
@@ -92,7 +98,7 @@ function AccountDropdown() {
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)] transition-colors"
           >
-            Terms & Disclaimer
+            Disclaimer
           </Link>
           <div className="border-t border-[var(--border)] my-1" />
           <button
@@ -107,7 +113,7 @@ function AccountDropdown() {
   );
 }
 
-function AccountContent({ userId, email, memberSince, plan, status, currentPeriodEnd, bookDiscountCode }: Props) {
+function AccountContent({ userId, email, memberSince, plan, status, currentPeriodEnd }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const upgraded = searchParams.get("upgraded") === "1";
@@ -115,7 +121,6 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
   const syncOnReturn = searchParams.get("sync") === "1";
 
   const [portalLoading, setPortalLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
 
@@ -188,13 +193,6 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
     const data = await res.json();
     if (data.url) window.location.href = data.url;
     else if (data.upgraded) window.location.href = "/dashboard?welcomed=1";
-  }
-
-  function copyCode() {
-    if (!bookDiscountCode) return;
-    navigator.clipboard.writeText(bookDiscountCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   }
 
   if (checkout || syncOnReturn) {

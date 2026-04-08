@@ -11,6 +11,8 @@ import { LikeButton } from "@/components/LikeButton";
 
 const nicheMap = Object.fromEntries(niches.map((n) => [n.slug, n]));
 
+const SITE = process.env.NEXTAUTH_URL ?? "https://goodsoilharvest.com";
+
 export async function generateMetadata({
   params,
 }: {
@@ -19,7 +21,30 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await prisma.post.findUnique({ where: { slug } });
   if (!post) return {};
-  return { title: post.title, description: post.description };
+
+  const url = `${SITE}/blog/${post.slug}`;
+  const ogImage = `${SITE}/api/og?title=${encodeURIComponent(post.title)}&niche=${encodeURIComponent(post.niche)}`;
+
+  return {
+    title: post.title,
+    description: post.description ?? undefined,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description: post.description ?? undefined,
+      url,
+      siteName: "Good Soil Harvest",
+      publishedTime: post.publishedAt?.toISOString(),
+      images: [{ url: ogImage, width: 1200, height: 630, alt: post.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.description ?? undefined,
+      images: [ogImage],
+    },
+  };
 }
 
 export default async function PostPage({
@@ -126,6 +151,27 @@ export default async function PostPage({
 
       <hr className="border-[var(--border)] mb-10" />
 
+      {/* JSON-LD structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: post.title,
+            description: post.description,
+            datePublished: post.publishedAt?.toISOString(),
+            url: `${SITE}/blog/${post.slug}`,
+            publisher: {
+              "@type": "Organization",
+              name: "Good Soil Harvest",
+              url: SITE,
+            },
+            mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE}/blog/${post.slug}` },
+          }),
+        }}
+      />
+
       {/* Content or paywall */}
       {accessGranted ? (
         <>
@@ -180,7 +226,7 @@ function Paywall({ isDeepRoots }: { isDeepRoots: boolean }) {
       <p className="text-[var(--text-muted)] max-w-sm mx-auto mb-8">
         This article is available to <strong>{requiredPlan}</strong> members.
         {isDeepRoots
-          ? " Upgrade to go deeper — exclusive posts, a book discount, and more."
+          ? " Upgrade to go deeper — exclusive posts, AI-powered search, and more."
           : " Join to unlock all premium articles across every category."}
       </p>
 

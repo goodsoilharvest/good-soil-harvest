@@ -37,20 +37,23 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan") ?? null;
 
-  const [email, setEmail]             = useState("");
-  const [emailTouched, setEmailTouched] = useState(false);
-  const [password, setPassword]       = useState("");
-  const [pwTouched, setPwTouched]     = useState(false);
-  const [error, setError]             = useState("");
-  const [loading, setLoading]         = useState(false);
+  const [email, setEmail]                 = useState("");
+  const [emailTouched, setEmailTouched]   = useState(false);
+  const [password, setPassword]           = useState("");
+  const [pwTouched, setPwTouched]         = useState(false);
+  const [confirm, setConfirm]             = useState("");
+  const [confirmTouched, setConfirmTouched] = useState(false);
+  const [error, setError]                 = useState("");
+  const [loading, setLoading]             = useState(false);
 
   const emailValid = validateEmail(email);
   const { rules, strength } = checkPassword(password);
   const allRulesMet = rules.every(r => r.met);
+  const passwordsMatch = password === confirm;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!emailValid || !allRulesMet) return;
+    if (!emailValid || !allRulesMet || !passwordsMatch) return;
     setLoading(true);
     setError("");
 
@@ -172,13 +175,39 @@ function RegisterForm() {
               )}
             </div>
 
+            {/* Confirm password */}
+            <div>
+              <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
+                Confirm password
+              </label>
+              <input
+                type="password"
+                value={confirm}
+                onChange={e => setConfirm(e.target.value)}
+                onBlur={() => setConfirmTouched(true)}
+                required
+                placeholder="Re-enter your password"
+                className={`w-full px-4 py-2.5 rounded-lg border bg-[var(--surface)] focus:outline-none text-sm transition-colors
+                  ${confirmTouched && confirm.length > 0 && !passwordsMatch
+                    ? "border-red-400 focus:border-red-400"
+                    : "border-[var(--border)] focus:border-[var(--color-sage-400)]"
+                  }`}
+              />
+              {confirmTouched && confirm.length > 0 && !passwordsMatch && (
+                <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+              )}
+              {confirmTouched && confirm.length > 0 && passwordsMatch && (
+                <p className="text-xs text-[var(--color-sage-600)] mt-1">✓ Passwords match</p>
+              )}
+            </div>
+
             {error && (
               <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
             )}
 
             <button
               type="submit"
-              disabled={loading || !emailValid || !allRulesMet}
+              disabled={loading || !emailValid || !allRulesMet || !passwordsMatch}
               className="w-full py-3 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold text-sm hover:bg-[var(--color-harvest-600)] transition-colors disabled:opacity-40"
             >
               {loading
