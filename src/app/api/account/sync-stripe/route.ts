@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { stripe } from "@/lib/stripe";
+import { stripe, planFromPriceId } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
 // Looks up the logged-in user's Stripe subscription (active OR trialing)
@@ -29,7 +29,8 @@ export async function POST() {
     return NextResponse.json({ error: "No active or trialing subscription found" }, { status: 404 });
   }
 
-  const plan = (stripeSub.metadata?.plan as "SEEDLING" | "DEEP_ROOTS") ?? "SEEDLING";
+  const priceId = stripeSub.items?.data?.[0]?.price.id ?? "";
+  const plan = planFromPriceId(priceId) ?? (stripeSub.metadata?.plan as "SEEDLING" | "DEEP_ROOTS") ?? "SEEDLING";
   const item = stripeSub.items?.data?.[0] as { current_period_end?: number } | undefined;
   const periodEnd = item?.current_period_end ? new Date(item.current_period_end * 1000) : null;
   const trialEnd = stripeSub.trial_end ? new Date(stripeSub.trial_end * 1000) : null;

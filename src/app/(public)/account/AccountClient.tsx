@@ -258,13 +258,23 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
                 Renews {new Date(currentPeriodEnd).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </p>
             )}
-            <button
-              onClick={openPortal}
-              disabled={portalLoading}
-              className="text-sm text-[var(--color-sage-600)] hover:underline disabled:opacity-50"
-            >
-              {portalLoading ? "Loading…" : "Manage billing, cancel, or update payment →"}
-            </button>
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <button
+                onClick={openPortal}
+                disabled={portalLoading}
+                className="text-sm text-[var(--color-sage-600)] hover:underline disabled:opacity-50"
+              >
+                {portalLoading ? "Loading…" : "Manage billing, cancel, or update payment →"}
+              </button>
+              <button
+                onClick={manualSync}
+                disabled={syncing}
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--color-sage-600)] hover:underline disabled:opacity-50 transition-colors"
+              >
+                {syncing ? "Syncing…" : "↺ Sync from Stripe"}
+              </button>
+            </div>
+            {syncMsg && <p className="text-xs text-[var(--color-sage-600)]">{syncMsg}</p>}
           </>
         ) : status === "PAST_DUE" ? (
           <div className="space-y-3">

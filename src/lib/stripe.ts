@@ -46,3 +46,10 @@ export const PLANS = {
 } as const;
 
 export type PlanKey = keyof typeof PLANS;
+
+/** Derive plan from a Stripe price ID — works even after portal plan changes */
+export function planFromPriceId(priceId: string): PlanKey | null {
+  if (priceId === process.env.STRIPE_PRICE_SEEDLING)   return "SEEDLING";
+  if (priceId === process.env.STRIPE_PRICE_DEEP_ROOTS) return "DEEP_ROOTS";
+  return null;
+}

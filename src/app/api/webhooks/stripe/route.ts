@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { stripe, planFromPriceId } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import type Stripe from "stripe";
 
@@ -78,7 +78,9 @@ export async function POST(req: NextRequest) {
 
     case "customer.subscription.updated": {
       const sub = event.data.object as Stripe.Subscription;
-      const plan = sub.metadata?.plan as "SEEDLING" | "DEEP_ROOTS" | undefined;
+      // Derive plan from price ID — metadata.plan is NOT updated by Stripe portal changes
+      const priceId = sub.items.data[0]?.price.id ?? "";
+      const plan = planFromPriceId(priceId) ?? (sub.metadata?.plan as "SEEDLING" | "DEEP_ROOTS" | undefined);
       const status = stripeStatusToDb(sub.status);
       const periodEnd = periodEndFromSub(sub);
       const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000) : null;
