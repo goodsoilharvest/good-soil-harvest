@@ -39,7 +39,7 @@ export const PLANS = {
     features: [
       "Everything in Seedling",
       "Exclusive Deep Roots posts (twice a month)",
-      "60% off the Good Soil book — covers printing, yours at cost",
+      "AI-powered search — ask anything, surface the exact articles you need",
       "Early access to new features",
     ],
   },
