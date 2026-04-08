@@ -10,13 +10,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Block unverified accounts from subscribing
+    // Block unverified accounts
     const user = await prisma.user.findUnique({ where: { id: session.user.id! } });
     if (user && !user.emailVerified) {
-      return NextResponse.json(
-        { error: "unverified", email: session.user.email },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "unverified", email: session.user.email }, { status: 403 });
     }
 
     const { plan } = (await req.json()) as { plan: PlanKey };
@@ -32,13 +29,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Find or create Stripe customer
-    const subscription = await prisma.subscription.findUnique({
-      where: { userId: session.user.id! },
-    });
+    const existingSub = await prisma.subscription.findUnique({ where: { userId: session.user.id! } });
 
-    let customerId = subscription?.stripeCustomerId;
+    // ── Already has an active subscription → update price in-place ──────────
+    if (
+      existingSub?.stripeSubscriptionId &&
+      (existingSub.status === "ACTIVE" || existingSub.status === "PAST_DUE")
+    ) {
+      const stripeSub = await stripe.subscriptions.retrieve(existingSub.stripeSubscriptionId);
+      const itemId = stripeSub.items.data[0]?.id;
 
+      if (itemId) {
+        const updated = await stripe.subscriptions.update(existingSub.stripeSubscriptionId, {
+          items: [{ id: itemId, price: priceId }],
+          proration_behavior: "always_invoice",
+          metadata: { userId: session.user.id!, plan },
+        });
+
+        const trialEnd = updated.trial_end ? new Date(updated.trial_end * 1000) : null;
+        const item = updated.items.data[0] as { current_period_end?: number } | undefined;
+        const periodEnd = item?.current_period_end ? new Date(item.current_period_end * 1000) : null;
+
+        await prisma.subscription.update({
+          where: { userId: session.user.id! },
+          data: { plan, trialEnd, currentPeriodEnd: periodEnd },
+        });
+
+        // Return a special flag so the client knows no redirect is needed
+        return NextResponse.json({ upgraded: true, plan });
+      }
+    }
+
+    // ── No existing subscription → create Checkout session (first time) ─────
+    let customerId = existingSub?.stripeCustomerId;
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: session.user.email,

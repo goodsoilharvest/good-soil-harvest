@@ -175,6 +175,7 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
     });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
+    else if (data.upgraded) window.location.href = "/dashboard?welcomed=1";
   }
 
   function copyCode() {

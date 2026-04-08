@@ -85,6 +85,7 @@ function DiscoverUpsell({ isPaid }: { isPaid: boolean }) {
     });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
+    else if (data.upgraded) window.location.href = "/dashboard?welcomed=1";
     else setLoading(false);
   }
 
