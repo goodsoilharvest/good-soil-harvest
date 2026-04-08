@@ -19,6 +19,7 @@ type Props = {
   userId: string;
   plan: string | null;
   isPaid: boolean;
+  isDeepRoots: boolean;
   suggestions: Post[];
   liked: Post[];
   history: Post[];
@@ -82,7 +83,7 @@ const QUICK_PROMPTS = [
 
 type Tab = "For You" | "Saved" | "History";
 
-function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, browse, totalPosts, trialEnd }: Props) {
+function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, liked, history, browse, totalPosts, trialEnd }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -164,8 +165,8 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
     );
   }
 
-  // What to show in the content area
-  const showSearch = searchResults !== null || searching;
+  // Search results only apply to Deep Roots users
+  const showSearch = isDeepRoots && (searchResults !== null || searching);
   let tabPosts: Post[] = [];
   let tabEmpty = false;
   let tabEmptyIcon = "📖";
@@ -216,14 +217,14 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
         </div>
       )}
 
-      {/* Trial countdown */}
-      {isPaid && daysLeft !== null && daysLeft > 0 && !welcomed && (
+      {/* Trial countdown — only surface when 3 days or fewer remain */}
+      {isPaid && daysLeft !== null && daysLeft <= 3 && daysLeft > 0 && !welcomed && (
         <div className="mb-6 rounded-xl bg-[var(--color-harvest-50)] border border-[var(--color-harvest-200)] px-5 py-4 flex items-center justify-between flex-wrap gap-3">
           <p className="text-sm font-semibold text-[var(--color-harvest-700)]">
-            🌱 Free trial — <span className="font-bold">{daysLeft} day{daysLeft !== 1 ? "s" : ""} left</span>. No charge until the trial ends.
+            ⏰ Trial ends in <span className="font-bold">{daysLeft} day{daysLeft !== 1 ? "s" : ""}</span> — your card will be charged when it expires.
           </p>
-          <Link href="/pricing" className="text-xs font-semibold text-[var(--color-harvest-700)] border border-[var(--color-harvest-400)] rounded-lg px-3 py-1.5 hover:bg-[var(--color-harvest-100)] transition-colors">
-            Upgrade now →
+          <Link href="/account" className="text-xs font-semibold text-[var(--color-harvest-700)] border border-[var(--color-harvest-400)] rounded-lg px-3 py-1.5 hover:bg-[var(--color-harvest-100)] transition-colors">
+            Manage billing →
           </Link>
         </div>
       )}
@@ -260,57 +261,67 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
         </div>
       )}
 
-      {/* ── AI Search bar (always visible) ── */}
-      <div className="mb-6">
-        <form
-          onSubmit={(e) => { e.preventDefault(); runSearch(query); }}
-          className="flex gap-2"
-        >
-          <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--text-muted)]">✨</span>
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="What's taking root in your mind today?"
-              className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-sm focus:outline-none focus:border-[var(--color-sage-400)] transition-colors"
-            />
-          </div>
-          {searchResults !== null ? (
-            <button
-              type="button"
-              onClick={clearSearch}
-              className="px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors shrink-0"
-            >
-              ✕ Clear
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={searching || !query.trim()}
-              className="px-4 py-2.5 rounded-xl bg-[var(--color-sage-500)] text-white font-semibold text-sm hover:bg-[var(--color-sage-600)] transition-colors disabled:opacity-40 shrink-0"
-            >
-              {searching ? "…" : "Ask"}
-            </button>
-          )}
-        </form>
-
-        {/* Quick prompts — only before first search */}
-        {!searchResults && !searching && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {QUICK_PROMPTS.map((p) => (
+      {/* ── AI Search bar — Deep Roots only ── */}
+      {isDeepRoots && (
+        <div className="mb-6">
+          <form
+            onSubmit={(e) => { e.preventDefault(); runSearch(query); }}
+            className="flex gap-2"
+          >
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--text-muted)]">✨</span>
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="What's taking root in your mind today?"
+                className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-sm focus:outline-none focus:border-[var(--color-sage-400)] transition-colors"
+              />
+            </div>
+            {searchResults !== null ? (
               <button
-                key={p}
-                onClick={() => { setQuery(p); runSearch(p); }}
-                className="text-xs px-3 py-1 rounded-full border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--color-sage-400)] hover:text-[var(--foreground)] transition-colors"
+                type="button"
+                onClick={clearSearch}
+                className="px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors shrink-0"
               >
-                {p}
+                ✕ Clear
               </button>
-            ))}
-          </div>
-        )}
-      </div>
+            ) : (
+              <button
+                type="submit"
+                disabled={searching || !query.trim()}
+                className="px-4 py-2.5 rounded-xl bg-[var(--color-sage-500)] text-white font-semibold text-sm hover:bg-[var(--color-sage-600)] transition-colors disabled:opacity-40 shrink-0"
+              >
+                {searching ? "…" : "Ask"}
+              </button>
+            )}
+          </form>
+
+          {/* Quick prompts */}
+          {!searchResults && !searching && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {QUICK_PROMPTS.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => { setQuery(p); runSearch(p); }}
+                  className="text-xs px-3 py-1 rounded-full border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--color-sage-400)] hover:text-[var(--foreground)] transition-colors"
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tease AI search for Seedling users */}
+      {isPaid && !isDeepRoots && (
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-[var(--border)] text-sm text-[var(--text-muted)]">
+          <span>✨</span>
+          <span>AI-powered search is a <Link href="/pricing" className="text-[var(--color-sage-600)] hover:underline font-medium">Deep Roots</Link> feature.</span>
+        </div>
+      )}
 
       {/* ── Tabs (paid users only, hidden during search) ── */}
       {isPaid && !showSearch && (

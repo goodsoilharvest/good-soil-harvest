@@ -17,6 +17,7 @@ export default async function DashboardPage() {
   });
 
   const isPaid = sub?.status === "ACTIVE";
+  const isDeepRoots = isPaid && sub?.plan === "DEEP_ROOTS";
   const plan = (sub?.plan as string | null) ?? null;
 
   const [suggestions, liked, history, totalPosts] = await Promise.all([
@@ -41,6 +42,7 @@ export default async function DashboardPage() {
       userId={userId}
       plan={plan}
       isPaid={isPaid}
+      isDeepRoots={isDeepRoots}
       suggestions={suggestions}
       liked={liked}
       history={history}

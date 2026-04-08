@@ -11,6 +11,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // AI search is a Deep Roots exclusive — check DB directly (not stale JWT)
+  const sub = await prisma.subscription.findUnique({
+    where: { userId: session.user.id },
+    select: { plan: true, status: true },
+  });
+  if (sub?.plan !== "DEEP_ROOTS" || sub?.status !== "ACTIVE") {
+    return NextResponse.json({ error: "Deep Roots membership required" }, { status: 403 });
+  }
+
   const { query } = (await req.json()) as { query?: string };
   if (!query?.trim()) {
     return NextResponse.json({ posts: [] });
