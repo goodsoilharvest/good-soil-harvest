@@ -42,50 +42,46 @@ export default function LoginPage() {
   if (status === "loading") return null;
 
   return (
-    <div className="min-h-screen bg-[var(--color-parchment)] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-md p-8">
+    <div className="min-h-screen bg-[var(--color-soil-900)] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-white/5 border border-white/10 rounded-2xl p-8">
         <div className="text-center mb-8">
           <span className="text-4xl block mb-2">🌱</span>
-          <h1 className="font-serif text-2xl font-bold text-[var(--color-soil-800)]">
-            Good Soil Admin
-          </h1>
+          <h1 className="font-serif text-2xl font-bold text-white">Good Soil Admin</h1>
+          <p className="text-white/40 text-sm mt-1">CMS access only</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[var(--color-soil-700)] mb-1">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-white/70 mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--color-sage-200)] focus:outline-none focus:border-[var(--color-sage-500)] text-sm"
+              autoFocus
+              className="w-full px-4 py-2.5 rounded-lg border border-white/15 bg-white/5 text-white placeholder:text-white/30 focus:outline-none focus:border-[var(--color-sage-400)] text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--color-soil-700)] mb-1">
-              Password
-            </label>
+            <label className="block text-sm font-medium text-white/70 mb-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--color-sage-200)] focus:outline-none focus:border-[var(--color-sage-500)] text-sm"
+              className="w-full px-4 py-2.5 rounded-lg border border-white/15 bg-white/5 text-white placeholder:text-white/30 focus:outline-none focus:border-[var(--color-sage-400)] text-sm"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-600">{error}</p>
+            <p className="text-sm text-red-400 bg-red-900/20 rounded-lg px-3 py-2">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-[var(--color-soil-800)] text-white font-semibold text-sm hover:bg-[var(--color-soil-700)] transition-colors disabled:opacity-50"
+            className="w-full py-2.5 rounded-lg bg-[var(--color-harvest-500)] text-[var(--color-soil-900)] font-semibold text-sm hover:bg-[var(--color-harvest-400)] transition-colors disabled:opacity-50"
           >
             {loading ? "Signing in…" : "Sign In"}
           </button>

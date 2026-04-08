@@ -9,15 +9,21 @@ export default async function DashboardPage() {
   if (!session?.user?.id) redirect("/sign-in");
 
   const userId = session.user.id;
-  const isPaid = session.user.subscriptionStatus === "ACTIVE";
 
-  // Load everything in parallel
-  const [suggestions, liked, history, totalPosts, sub] = await Promise.all([
+  // Always read subscription from DB — JWT token can be stale after sync
+  const sub = await prisma.subscription.findUnique({
+    where: { userId },
+    select: { status: true, plan: true, trialEnd: true },
+  });
+
+  const isPaid = sub?.status === "ACTIVE";
+  const plan = (sub?.plan as string | null) ?? null;
+
+  const [suggestions, liked, history, totalPosts] = await Promise.all([
     isPaid ? getSuggestions(userId) : Promise.resolve([]),
     isPaid ? getLikedPosts(userId)  : Promise.resolve([]),
     isPaid ? getViewedPosts(userId) : Promise.resolve([]),
     prisma.post.count({ where: { status: "PUBLISHED" } }),
-    prisma.subscription.findUnique({ where: { userId }, select: { trialEnd: true } }),
   ]);
 
   const browse = await prisma.post.findMany({
@@ -30,20 +36,17 @@ export default async function DashboardPage() {
     take: 24,
   });
 
-  const plan = session.user.subscriptionPlan as string | null | undefined;
-  const trialEnd = sub?.trialEnd ?? null;
-
   return (
     <DashboardClient
       userId={userId}
-      plan={plan ?? null}
+      plan={plan}
       isPaid={isPaid}
       suggestions={suggestions}
       liked={liked}
       history={history}
       browse={browse}
       totalPosts={totalPosts}
-      trialEnd={trialEnd ? trialEnd.toISOString() : null}
+      trialEnd={sub?.trialEnd ? sub.trialEnd.toISOString() : null}
     />
   );
 }
