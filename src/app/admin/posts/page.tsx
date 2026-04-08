@@ -36,7 +36,7 @@ export default async function PostsPage({
   // Compute duplicates across ALL posts (not just the filtered view) so
   // the flag shows up regardless of which filter tab you're on.
   const allPosts = await prisma.post.findMany({
-    select: { id: true, title: true },
+    select: { id: true, title: true, niche: true },
     orderBy: { createdAt: "asc" },
   });
   const dupeMap = findDuplicates(allPosts);

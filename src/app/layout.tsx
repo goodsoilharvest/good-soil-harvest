@@ -3,6 +3,7 @@ import { Lora, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/lib/config";
 import { Providers } from "@/components/Providers";
+import { StripeSandboxBanner } from "@/components/layout/StripeSandboxBanner";
 import "./globals.css";
 
 const lora = Lora({
@@ -44,6 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${lora.variable} ${inter.variable}`}>
       <body className="min-h-screen flex flex-col">
+        {process.env.NEXT_PUBLIC_STRIPE_SANDBOX === "true" && <StripeSandboxBanner />}
         <Providers>{children}</Providers>
         <Analytics />
       </body>
