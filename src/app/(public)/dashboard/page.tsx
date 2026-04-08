@@ -12,14 +12,14 @@ export default async function DashboardPage() {
   const isPaid = session.user.subscriptionStatus === "ACTIVE";
 
   // Load everything in parallel
-  const [suggestions, liked, history, totalPosts] = await Promise.all([
+  const [suggestions, liked, history, totalPosts, sub] = await Promise.all([
     isPaid ? getSuggestions(userId) : Promise.resolve([]),
     isPaid ? getLikedPosts(userId)  : Promise.resolve([]),
     isPaid ? getViewedPosts(userId) : Promise.resolve([]),
     prisma.post.count({ where: { status: "PUBLISHED" } }),
+    prisma.subscription.findUnique({ where: { userId }, select: { trialEnd: true } }),
   ]);
 
-  // Browse tab: latest posts regardless of tier
   const browse = await prisma.post.findMany({
     where: { status: "PUBLISHED" },
     select: {
@@ -31,6 +31,7 @@ export default async function DashboardPage() {
   });
 
   const plan = session.user.subscriptionPlan as string | null | undefined;
+  const trialEnd = sub?.trialEnd ?? null;
 
   return (
     <DashboardClient
@@ -42,6 +43,7 @@ export default async function DashboardPage() {
       history={history}
       browse={browse}
       totalPosts={totalPosts}
+      trialEnd={trialEnd ? trialEnd.toISOString() : null}
     />
   );
 }

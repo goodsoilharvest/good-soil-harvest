@@ -48,9 +48,10 @@ export async function POST(req: NextRequest) {
 
       if (!userId) break;
 
-      // Get period end from the first subscription item
+      // Get period end and trial end from the subscription
       const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
       const periodEnd = periodEndFromSub(stripeSub);
+      const trialEnd = stripeSub.trial_end ? new Date(stripeSub.trial_end * 1000) : null;
 
       await prisma.subscription.upsert({
         where: { userId },
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
           status: "ACTIVE",
           plan: plan ?? "SEEDLING",
           currentPeriodEnd: periodEnd,
+          trialEnd,
         },
         update: {
           stripeCustomerId: customerId,
@@ -68,6 +70,7 @@ export async function POST(req: NextRequest) {
           status: "ACTIVE",
           plan: plan ?? "SEEDLING",
           currentPeriodEnd: periodEnd,
+          trialEnd,
         },
       });
       break;
@@ -78,12 +81,14 @@ export async function POST(req: NextRequest) {
       const plan = sub.metadata?.plan as "SEEDLING" | "DEEP_ROOTS" | undefined;
       const status = stripeStatusToDb(sub.status);
       const periodEnd = periodEndFromSub(sub);
+      const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000) : null;
 
       await prisma.subscription.updateMany({
         where: { stripeSubscriptionId: sub.id },
         data: {
           status,
           currentPeriodEnd: periodEnd,
+          trialEnd,
           ...(plan ? { plan } : {}),
         },
       });

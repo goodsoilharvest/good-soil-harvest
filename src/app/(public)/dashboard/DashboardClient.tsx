@@ -24,6 +24,7 @@ type Props = {
   history: Post[];
   browse: Post[];
   totalPosts: number;
+  trialEnd: string | null;
 };
 
 const nicheColors: Record<string, string> = {
@@ -213,7 +214,14 @@ function DiscoverTab({ browse }: { browse: Post[] }) {
 
 const TABS_PAID = ["For You", "Saved", "History", "Discover"] as const;
 
-function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, browse, totalPosts }: Props) {
+function trialDaysLeft(trialEnd: string | null): number | null {
+  if (!trialEnd) return null;
+  const ms = new Date(trialEnd).getTime() - Date.now();
+  if (ms <= 0) return 0;
+  return Math.ceil(ms / (1000 * 60 * 60 * 24));
+}
+
+function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, browse, totalPosts, trialEnd }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -256,6 +264,7 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
 
   const welcomed = searchParams.get("welcomed") === "1";
   const planLabel = plan === "DEEP_ROOTS" ? "🌾 Deep Roots" : plan === "SEEDLING" ? "🌱 Seedling" : null;
+  const daysLeft = trialDaysLeft(trialEnd);
 
   // Show loading screen while auto-redirecting to Stripe
   if (checkout) {
@@ -278,6 +287,28 @@ function DashboardContent({ userId, plan, isPaid, suggestions, liked, history, b
           <span className="animate-spin inline-block">⟳</span> Activating your membership…
         </div>
       )}
+      {/* Trial countdown banner */}
+      {isPaid && daysLeft !== null && daysLeft > 0 && !welcomed && (
+        <div className="mb-6 rounded-xl bg-[var(--color-harvest-50)] border border-[var(--color-harvest-200)] px-5 py-4 flex items-center justify-between flex-wrap gap-3">
+          <p className="text-sm font-semibold text-[var(--color-harvest-700)]">
+            🌱 Free trial — <span className="font-bold">{daysLeft} day{daysLeft !== 1 ? "s" : ""} left</span>. Your card won&apos;t be charged until the trial ends.
+          </p>
+          <Link href="/pricing" className="text-xs font-semibold text-[var(--color-harvest-700)] border border-[var(--color-harvest-400)] rounded-lg px-3 py-1.5 hover:bg-[var(--color-harvest-100)] transition-colors">
+            Upgrade now →
+          </Link>
+        </div>
+      )}
+      {isPaid && daysLeft === 0 && (
+        <div className="mb-6 rounded-xl bg-amber-50 border border-amber-200 px-5 py-4 flex items-center justify-between flex-wrap gap-3">
+          <p className="text-sm font-semibold text-amber-800">
+            ⏰ Your free trial has ended — your membership is now active.
+          </p>
+          <Link href="/account" className="text-xs font-semibold text-amber-700 hover:underline">
+            Manage billing →
+          </Link>
+        </div>
+      )}
+
       {welcomed && planLabel && (
         <div className="mb-6 rounded-xl bg-[var(--color-sage-50)] border border-[var(--color-sage-200)] px-5 py-4 flex items-center justify-between flex-wrap gap-3">
           <p className="text-sm font-semibold text-[var(--color-sage-700)]">
