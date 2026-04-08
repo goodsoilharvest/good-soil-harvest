@@ -26,6 +26,11 @@ const STOP_WORDS = new Set([
   "human","social","personal","natural","physical","mental","cultural",
   "modern","common","simple","complex","specific","general","different",
   "important","significant","powerful","effective","difficult","possible",
+  // Additional generic words that cause false positives
+  "really","person","meant","ourselves","thinking","others","another",
+  "inside","beyond","toward","against","across","whether","either",
+  "false","wrong","right","better","worse","higher","lower","small","large",
+  "among","often","usual","usual","given","place","point","sense","level",
 ]);
 
 // Niche-specific stop words: common within a category but not topic-specific enough
@@ -36,12 +41,17 @@ const NICHE_STOP_WORDS: Record<string, Set<string>> = {
     "spiritual","divine","sacred","holy","saint","saints","bible","biblical",
     "grace","wisdom","truth","light","eternal","kingdom","heaven","covenant",
     "worship","sermon","parable","psalm","psalms","prophet","prophets",
+    // Faith-specific generics
+    "really","means","named","called","tells","shows","about",
   ]),
   finance: new Set([
     "money","financial","wealth","invest","investing","investment","income",
     "savings","budget","budgeting","spending","retirement","portfolio","asset",
     "assets","returns","interest","compound","rates","taxes","dollars",
     "economic","economy","behavior","behavioral","market","markets",
+    // Finance-specific generics (appear in many unrelated finance titles)
+    "enough","funds","matters","value","worth","costs","price","saving",
+    "growth","planning","strategy","approach","makes","means","works",
   ]),
   psychology: new Set([
     "brain","behavior","behavioral","mental","cognitive","psychology",
@@ -64,6 +74,9 @@ const NICHE_STOP_WORDS: Record<string, Set<string>> = {
     "organisms","system","systems","process","processes","evidence","data",
     "experiment","experiments","theory","theories","biology","biological",
     "physics","chemistry","discovery","discoveries","mechanism","mechanisms",
+    // Science-specific generics
+    "light","speed","energy","space","force","field","cells","genes",
+    "human","brain","world","things","works","inside","complex",
   ]),
 };
 
