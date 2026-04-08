@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -41,11 +41,76 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+function AccountDropdown() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
+      >
+        <span>⚙ Account</span>
+        <span className={`text-xs transition-transform ${open ? "rotate-180" : ""}`}>▾</span>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 mt-2 w-52 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg py-1 z-10">
+          <Link
+            href="/account/change-password"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--surface-muted)] transition-colors"
+          >
+            🔑 Change password
+          </Link>
+          <Link
+            href="/contact"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--surface-muted)] transition-colors"
+          >
+            💬 Contact / Support
+          </Link>
+          <div className="border-t border-[var(--border)] my-1" />
+          <Link
+            href="/privacy"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)] transition-colors"
+          >
+            Privacy Policy
+          </Link>
+          <Link
+            href="/disclaimer"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)] transition-colors"
+          >
+            Terms & Disclaimer
+          </Link>
+          <div className="border-t border-[var(--border)] my-1" />
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left"
+          >
+            ↩ Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AccountContent({ userId, email, memberSince, plan, status, currentPeriodEnd, bookDiscountCode }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const upgraded = searchParams.get("upgraded") === "1";
-
   const checkout = searchParams.get("checkout");
 
   const [portalLoading, setPortalLoading] = useState(false);
@@ -56,7 +121,6 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
   const isActive = status === "ACTIVE";
   const info = plan ? planInfo[plan] : null;
 
-  // Auto-fire Stripe checkout after post-verification auto-login
   useEffect(() => {
     if (!checkout) return;
     fetch("/api/stripe/checkout", {
@@ -73,37 +137,26 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-sync when landing from a successful Stripe checkout
   useEffect(() => {
     if (upgraded && !isActive) {
       setSyncing(true);
       fetch("/api/account/sync-stripe", { method: "POST" })
         .then(r => r.json())
         .then(data => {
-          if (data.ok) {
-            // Strip ?upgraded=1 and reload fresh from server
-            router.replace("/account");
-          } else {
-            setSyncMsg("Subscription not found in Stripe yet — try refreshing in a moment.");
-            setSyncing(false);
-          }
+          if (data.ok) router.replace("/account");
+          else { setSyncMsg("Subscription not found in Stripe yet — try refreshing in a moment."); setSyncing(false); }
         })
-        .catch(() => { setSyncing(false); });
+        .catch(() => setSyncing(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function manualSync() {
-    setSyncing(true);
-    setSyncMsg(null);
+    setSyncing(true); setSyncMsg(null);
     const res = await fetch("/api/account/sync-stripe", { method: "POST" });
     const data = await res.json();
-    if (res.ok) {
-      router.replace("/account");
-    } else {
-      setSyncMsg(data.error ?? "No active Stripe subscription found for this email.");
-      setSyncing(false);
-    }
+    if (res.ok) router.replace("/account");
+    else { setSyncMsg(data.error ?? "No active Stripe subscription found for this email."); setSyncing(false); }
   }
 
   async function openPortal() {
@@ -131,7 +184,6 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
     setTimeout(() => setCopied(false), 2000);
   }
 
-  // Show loading screen while auto-redirecting to Stripe (no flash of account UI)
   if (checkout) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4">
@@ -146,7 +198,6 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-14 space-y-5">
 
-      {/* Success / syncing banner */}
       {upgraded && syncing && (
         <div className="rounded-xl bg-[var(--color-sage-50)] border border-[var(--color-sage-200)] px-5 py-4 text-sm text-[var(--color-sage-700)] font-medium flex items-center gap-2">
           <span className="animate-spin">⟳</span> Confirming your membership…
@@ -158,9 +209,15 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
         </div>
       )}
 
-      {/* Header */}
-      <div className="pb-2">
+      {/* Header with back link */}
+      <div className="pb-2 flex items-center justify-between">
         <h1 className="font-serif text-3xl font-bold text-[var(--foreground)]">Your Account</h1>
+        <Link
+          href="/dashboard"
+          className="text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1"
+        >
+          ← My Feed
+        </Link>
       </div>
 
       {/* Profile */}
@@ -178,14 +235,6 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
               </span>
             </div>
           )}
-        </div>
-        <div className="pt-1 border-t border-[var(--border)]">
-          <Link
-            href="/account/change-password"
-            className="text-sm text-[var(--color-sage-600)] hover:underline"
-          >
-            Change password →
-          </Link>
         </div>
       </Section>
 
@@ -261,24 +310,12 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
         <Section title="Deep Roots Perks">
           <div className="space-y-5">
             <div className="flex items-start gap-4">
-              <span className="text-2xl mt-0.5">📖</span>
+              <span className="text-2xl mt-0.5">✨</span>
               <div className="flex-1">
-                <p className="font-semibold text-[var(--foreground)] mb-1">60% Off the Good Soil Book</p>
-                <p className="text-sm text-[var(--text-muted)] mb-3">
-                  Your discount covers printing — you get it at cost.
+                <p className="font-semibold text-[var(--foreground)] mb-1">AI-Powered Search</p>
+                <p className="text-sm text-[var(--text-muted)]">
+                  Ask anything and our AI surfaces the exact articles for what&apos;s on your mind — exclusive to Deep Roots.
                 </p>
-                {bookDiscountCode ? (
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <code className="bg-[var(--color-harvest-50)] border border-[var(--color-harvest-200)] text-[var(--color-harvest-800)] font-mono font-bold text-sm px-4 py-2 rounded-lg tracking-widest">
-                      {bookDiscountCode}
-                    </code>
-                    <button onClick={copyCode} className="text-xs text-[var(--color-sage-600)] hover:underline">
-                      {copied ? "Copied!" : "Copy"}
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-sm text-[var(--text-muted)] italic">Book coming soon — your code will appear here.</p>
-                )}
               </div>
             </div>
 
@@ -296,23 +333,23 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
             </div>
 
             <div className="flex items-start gap-4 opacity-60">
-              <span className="text-2xl mt-0.5">✨</span>
+              <span className="text-2xl mt-0.5">🚀</span>
               <div>
-                <p className="font-semibold text-[var(--foreground)] mb-1">More coming soon</p>
-                <p className="text-sm text-[var(--text-muted)]">Courses, reflection guides, and community resources.</p>
+                <p className="font-semibold text-[var(--foreground)] mb-1">Early Access</p>
+                <p className="text-sm text-[var(--text-muted)]">First to see new features and content drops.</p>
               </div>
             </div>
           </div>
         </Section>
       )}
 
-      {/* Upgrade nudge for Seedling members */}
+      {/* Upgrade nudge for Seedling */}
       {isActive && plan === "SEEDLING" && (
         <div className="rounded-2xl border border-[var(--color-harvest-200)] bg-[var(--color-harvest-50)] p-6 flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
             <p className="font-semibold text-[var(--color-harvest-800)] mb-1">🌾 Unlock Deep Roots</p>
             <p className="text-sm text-[var(--color-harvest-700)]">
-              Exclusive posts twice a month, 60% off the Good Soil book, and early access to new features.
+              Exclusive posts twice a month, AI-powered search, and early access to new features.
             </p>
           </div>
           <button
@@ -324,14 +361,9 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
         </div>
       )}
 
-      {/* Account actions */}
-      <Section title="Account">
-        <button
-          onClick={() => signOut({ callbackUrl: "/" })}
-          className="text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors text-left"
-        >
-          Sign out
-        </button>
+      {/* Account dropdown */}
+      <Section title="More">
+        <AccountDropdown />
       </Section>
 
     </div>

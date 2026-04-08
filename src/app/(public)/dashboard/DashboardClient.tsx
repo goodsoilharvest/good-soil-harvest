@@ -73,6 +73,61 @@ function trialDaysLeft(trialEnd: string | null): number | null {
   return Math.ceil(ms / (1000 * 60 * 60 * 24));
 }
 
+function DiscoverUpsell({ isPaid }: { isPaid: boolean }) {
+  const [loading, setLoading] = useState(false);
+
+  async function upgrade() {
+    setLoading(true);
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: "DEEP_ROOTS" }),
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else setLoading(false);
+  }
+
+  return (
+    <div className="max-w-xl mx-auto py-10 px-4 text-center">
+      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--color-harvest-50)] border border-[var(--color-harvest-200)] mb-6 text-3xl">
+        ✨
+      </div>
+      <h2 className="font-serif text-2xl font-bold text-[var(--foreground)] mb-3">
+        AI-Powered Search
+      </h2>
+      <p className="text-[var(--text-muted)] leading-relaxed mb-8">
+        Type any question or curiosity — our AI reads through all {isPaid ? "60+" : ""} articles and surfaces exactly what matches what&apos;s on your mind. No scrolling, no guessing.
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 text-left">
+        {[
+          { icon: "💬", title: "Ask naturally", body: "\"How do I think about money and anxiety?\" — plain language, real results." },
+          { icon: "🎯", title: "Precise matches", body: "AI ranks articles by relevance to your exact question, not just keywords." },
+          { icon: "🌾", title: "Deep Roots exclusive", body: "Available only to Deep Roots members as part of the premium experience." },
+        ].map(item => (
+          <div key={item.title} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            <div className="text-2xl mb-2">{item.icon}</div>
+            <p className="font-semibold text-[var(--foreground)] text-sm mb-1">{item.title}</p>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">{item.body}</p>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={upgrade}
+        disabled={loading}
+        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold hover:bg-[var(--color-harvest-400)] transition-colors disabled:opacity-50"
+      >
+        {loading ? "Loading…" : "Upgrade to Deep Roots — $9.99/mo"}
+      </button>
+      <p className="text-xs text-[var(--text-muted)] mt-3">
+        {isPaid ? "Upgrade from Seedling — cancel anytime." : "7-day free trial — no charge until trial ends."}
+      </p>
+    </div>
+  );
+}
+
 const QUICK_PROMPTS = [
   "living with more purpose",
   "managing money and anxiety",
@@ -81,7 +136,7 @@ const QUICK_PROMPTS = [
   "ideas that changed history",
 ];
 
-type Tab = "For You" | "Saved" | "History";
+type Tab = "For You" | "Saved" | "History" | "Discover";
 
 function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, liked, history, browse, totalPosts, trialEnd }: Props) {
   const searchParams = useSearchParams();
@@ -315,18 +370,11 @@ function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, like
         </div>
       )}
 
-      {/* Tease AI search for Seedling users */}
-      {isPaid && !isDeepRoots && (
-        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-[var(--border)] text-sm text-[var(--text-muted)]">
-          <span>✨</span>
-          <span>AI-powered search is a <Link href="/pricing" className="text-[var(--color-sage-600)] hover:underline font-medium">Deep Roots</Link> feature.</span>
-        </div>
-      )}
 
-      {/* ── Tabs (paid users only, hidden during search) ── */}
-      {isPaid && !showSearch && (
+      {/* ── Tabs ── */}
+      {!showSearch && (
         <div className="flex gap-1 mb-6 border-b border-[var(--border)] overflow-x-auto">
-          {(["For You", "Saved", "History"] as Tab[]).map(t => (
+          {isPaid && (["For You", "Saved", "History"] as Tab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -345,6 +393,19 @@ function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, like
               )}
             </button>
           ))}
+          {/* Discover tab — shown to free + Seedling as an upsell; Deep Roots has the real search bar */}
+          {!isDeepRoots && (
+            <button
+              onClick={() => setTab("Discover")}
+              className={`px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors -mb-px border-b-2 flex items-center gap-1.5 ${
+                tab === "Discover"
+                  ? "border-[var(--color-harvest-500)] text-[var(--color-harvest-600)]"
+                  : "border-transparent text-[var(--text-muted)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              🌾 Discover
+            </button>
+          )}
         </div>
       )}
 
@@ -391,8 +452,13 @@ function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, like
         )
       )}
 
-      {/* Browse all (free users, no search active) */}
-      {!showSearch && !isPaid && (
+      {/* Discover tab upsell (free + Seedling) */}
+      {!showSearch && !isDeepRoots && tab === "Discover" && (
+        <DiscoverUpsell isPaid={isPaid} />
+      )}
+
+      {/* Browse all (free + Seedling users, not on Discover tab) */}
+      {!showSearch && !isDeepRoots && tab !== "Discover" && !isPaid && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {browse.map(p => <PostCard key={p.id} post={p} />)}
         </div>
