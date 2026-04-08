@@ -112,6 +112,7 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
   const router = useRouter();
   const upgraded = searchParams.get("upgraded") === "1";
   const checkout = searchParams.get("checkout");
+  const syncOnReturn = searchParams.get("sync") === "1";
 
   const [portalLoading, setPortalLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -137,6 +138,7 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // After Stripe checkout (new subscription)
   useEffect(() => {
     if (upgraded && !isActive) {
       setSyncing(true);
@@ -148,6 +150,16 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
         })
         .catch(() => setSyncing(false));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // After returning from Stripe portal (plan change, cancel, etc.)
+  useEffect(() => {
+    if (!syncOnReturn) return;
+    setSyncing(true);
+    fetch("/api/account/sync-stripe", { method: "POST" })
+      .then(() => router.replace("/account"))
+      .catch(() => router.replace("/account"));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -185,12 +197,14 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
     setTimeout(() => setCopied(false), 2000);
   }
 
-  if (checkout) {
+  if (checkout || syncOnReturn) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="text-center space-y-3">
           <div className="text-4xl animate-pulse">🌱</div>
-          <p className="text-[var(--text-muted)] text-sm">Taking you to checkout…</p>
+          <p className="text-[var(--text-muted)] text-sm">
+            {syncOnReturn ? "Updating your membership…" : "Taking you to checkout…"}
+          </p>
         </div>
       </div>
     );
@@ -258,23 +272,13 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
                 Renews {new Date(currentPeriodEnd).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </p>
             )}
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <button
-                onClick={openPortal}
-                disabled={portalLoading}
-                className="text-sm text-[var(--color-sage-600)] hover:underline disabled:opacity-50"
-              >
-                {portalLoading ? "Loading…" : "Manage billing, cancel, or update payment →"}
-              </button>
-              <button
-                onClick={manualSync}
-                disabled={syncing}
-                className="text-xs text-[var(--text-muted)] hover:text-[var(--color-sage-600)] hover:underline disabled:opacity-50 transition-colors"
-              >
-                {syncing ? "Syncing…" : "↺ Sync from Stripe"}
-              </button>
-            </div>
-            {syncMsg && <p className="text-xs text-[var(--color-sage-600)]">{syncMsg}</p>}
+            <button
+              onClick={openPortal}
+              disabled={portalLoading}
+              className="text-sm text-[var(--color-sage-600)] hover:underline disabled:opacity-50"
+            >
+              {portalLoading ? "Loading…" : "Manage billing, cancel, or update payment →"}
+            </button>
           </>
         ) : status === "PAST_DUE" ? (
           <div className="space-y-3">
