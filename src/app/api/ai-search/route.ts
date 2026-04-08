@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import Anthropic from "@anthropic-ai/sdk";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const client = new Anthropic();  // reads ANTHROPIC_API_KEY automatically
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ posts: [] });
   }
 
-  // Fetch all published post metadata
   const posts = await prisma.post.findMany({
     where: { status: "PUBLISHED" },
     select: { id: true, slug: true, title: true, description: true, niche: true, isPremium: true, isDeepRoots: true, publishedAt: true },
@@ -25,41 +24,46 @@ export async function POST(req: NextRequest) {
 
   if (posts.length === 0) return NextResponse.json({ posts: [] });
 
-  // Build compact catalog for the prompt
   const catalog = posts
-    .map((p, i) => `[${i}] ${p.title} (${p.niche}): ${p.description}`)
+    .map((p, i) => `[${i}] ${p.title} (${p.niche}) — ${p.description}`)
     .join("\n");
 
   const message = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 256,
+    max_tokens: 64,
+    system:
+      "You are a reading recommendation assistant. Given a reader's interest and a list of articles, return the indices of the 6 most relevant articles as a JSON array sorted best-first. Output ONLY the JSON array — no explanation, no markdown.",
     messages: [
       {
         role: "user",
-        content: `You are a reading recommendation assistant for Good Soil Harvest, a thoughtful blog covering faith, finance, psychology, philosophy, and science.
-
-A reader said: "${query.trim()}"
-
-Here are the available articles (by index):
-${catalog}
-
-Return the indices of the 6 most relevant articles as a JSON array, most relevant first. Example: [4,12,0,7,22,5]
-Return ONLY the JSON array, nothing else.`,
+        content: `Reader interest: "${query.trim()}"\n\nArticles:\n${catalog}`,
+      },
+      // Prefill forces Haiku to start mid-JSON — guarantees clean output
+      {
+        role: "assistant",
+        content: "[",
       },
     ],
   });
 
+  // Response starts after our "[" prefill, so prepend it back
+  const raw = "[" + (message.content[0].type === "text" ? message.content[0].text.trim() : "");
+
   let indices: number[] = [];
   try {
-    const text = message.content[0].type === "text" ? message.content[0].text.trim() : "[]";
-    indices = JSON.parse(text);
-    if (!Array.isArray(indices)) indices = [];
+    // Try direct parse first, then fall back to regex extraction
+    indices = JSON.parse(raw);
   } catch {
-    indices = [];
+    const match = raw.match(/\[\s*[\d,\s]+\s*\]/);
+    if (match) {
+      try { indices = JSON.parse(match[0]); } catch { indices = []; }
+    }
   }
 
+  if (!Array.isArray(indices)) indices = [];
+
   const results = indices
-    .filter((i) => typeof i === "number" && i >= 0 && i < posts.length)
+    .filter((i): i is number => typeof i === "number" && Number.isInteger(i) && i >= 0 && i < posts.length)
     .slice(0, 6)
     .map((i) => posts[i]);
 
