@@ -8,6 +8,7 @@ import rehypeSlug from "rehype-slug";
 import { auth } from "@/auth";
 import type { Metadata } from "next";
 import { LikeButton } from "@/components/LikeButton";
+import Image from "next/image";
 
 const nicheMap = Object.fromEntries(niches.map((n) => [n.slug, n]));
 
@@ -150,6 +151,19 @@ export default async function PostPage({
       </header>
 
       <hr className="border-[var(--border)] mb-10" />
+
+      {post.featuredImage && (
+        <div className="relative w-full h-72 sm:h-96 rounded-2xl overflow-hidden mb-10">
+          <Image
+            src={post.featuredImage}
+            alt={post.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 800px"
+            priority
+          />
+        </div>
+      )}
 
       {/* JSON-LD structured data */}
       <script

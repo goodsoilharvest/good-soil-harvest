@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { title, description, content, niche, isPremium, agentName, notes } = body;
+  const { title, description, content, niche, isPremium, agentName, notes, featuredImage } = body;
 
   if (!title || !content || !niche || !agentName) {
     return NextResponse.json({ error: "Missing required fields: title, content, niche, agentName" }, { status: 400 });
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       content,
       niche,
       isPremium: isPremium ?? false,
+      featuredImage: featuredImage ?? null,
       agentName,
       notes: notes ?? null,
     },

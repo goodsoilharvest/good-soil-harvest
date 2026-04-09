@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { niches } from "@/lib/config";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -20,6 +21,7 @@ type Post = {
   isPremium: boolean;
   isDeepRoots: boolean;
   publishedAt: Date | null;
+  featuredImage: string | null;
 };
 
 const nicheMap = Object.fromEntries(niches.map((n) => [n.slug, n]));
@@ -68,6 +70,17 @@ export default function BlogClient({ posts }: { posts: Post[] }) {
                 className="bg-[var(--surface)] rounded-2xl overflow-hidden border border-[var(--border)] hover:border-[var(--color-sage-400)] transition-colors shadow-sm"
               >
                 <div className="h-2 w-full" style={{ background: `var(--color-${niche?.color ?? "sage"}-500)` }} />
+                {post.featuredImage && (
+                  <div className="relative w-full h-44 overflow-hidden">
+                    <Image
+                      src={post.featuredImage}
+                      alt={post.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                  </div>
+                )}
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <Link href={`/niches/${post.niche}`}>

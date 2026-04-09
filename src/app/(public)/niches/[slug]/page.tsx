@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { niches } from "@/lib/config";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 
 export async function generateMetadata({
@@ -45,8 +46,20 @@ export default async function NichePage({
           {posts.map((post) => (
             <article
               key={post.id}
-              className="bg-[var(--surface)] rounded-2xl p-6 border border-[var(--border)] hover:border-[var(--color-sage-400)] transition-colors shadow-sm"
+              className="bg-[var(--surface)] rounded-2xl overflow-hidden border border-[var(--border)] hover:border-[var(--color-sage-400)] transition-colors shadow-sm"
             >
+              {post.featuredImage && (
+                <div className="relative w-full h-44">
+                  <Image
+                    src={post.featuredImage}
+                    alt={post.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
+                </div>
+              )}
+              <div className="p-6">
               <div className="flex items-center gap-2 mb-2">
                 {post.isDeepRoots && (
                   <span className="text-xs font-semibold text-[var(--color-harvest-600)] border border-[var(--color-harvest-300)] rounded-full px-2 py-0.5">
@@ -72,6 +85,7 @@ export default async function NichePage({
                 <Link href={`/blog/${post.slug}`} className="text-sm font-semibold text-[var(--color-sage-600)] hover:text-[var(--color-harvest-600)] transition-colors">
                   {post.isPremium || post.isDeepRoots ? "Preview →" : "Read →"}
                 </Link>
+              </div>
               </div>
             </article>
           ))}

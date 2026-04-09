@@ -23,6 +23,7 @@ export default async function BlogPage() {
       isPremium: true,
       isDeepRoots: true,
       publishedAt: true,
+      featuredImage: true,
     },
   });
 
