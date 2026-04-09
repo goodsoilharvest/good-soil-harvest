@@ -62,7 +62,7 @@ function sleep(ms) {
 
 async function generateImage(prompt) {
   const body = JSON.stringify({
-    model: "black-forest-labs/FLUX.1-schnell-Free",
+    model: "black-forest-labs/FLUX.1-schnell",
     prompt,
     width: 1216,
     height: 832,
