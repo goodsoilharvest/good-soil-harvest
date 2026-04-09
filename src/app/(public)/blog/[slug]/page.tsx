@@ -201,6 +201,15 @@ export default async function PostPage({
             />
           </article>
 
+          {post.references && (
+            <div className="mt-10 pt-8 border-t border-[var(--border)]">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-3">References</h2>
+              <div className="text-sm text-[var(--text-muted)] leading-relaxed whitespace-pre-wrap">
+                {post.references}
+              </div>
+            </div>
+          )}
+
           {userId && (
             <div className="mt-10 pt-8 border-t border-[var(--border)] flex items-center gap-3">
               <LikeButton postId={post.id} initialLiked={isLiked} />

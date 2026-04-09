@@ -79,7 +79,8 @@ model Post {
   niche       NicheSlug
   isPremium      Boolean    @default(false)
   isDeepRoots    Boolean    @default(false)  // exclusive Deep Roots content
-  featuredImage  String?                     // Unsplash image URL
+  featuredImage  String?                     // blog featured image URL
+  references     String?                     // sources / citations (markdown)
   status         PostStatus @default(DRAFT)
   publishedAt DateTime?
   createdAt   DateTime   @default(now())
@@ -133,12 +134,14 @@ model AgentDraft {
   id          String      @id @default(cuid())
   title       String
   description String
-  content     String      // MDX content from Marceline
+  content     String      // MDX content
   niche       NicheSlug
   isPremium     Boolean     @default(false)
-  featuredImage String?                      // Unsplash image URL
-  agentName     String      // which agent wrote it (e.g. "marceline")
-  notes         String?     // agent notes / research sources
+  isDeepRoots   Boolean     @default(false)  // exclusive Deep Roots content
+  featuredImage String?                      // blog featured image URL
+  references    String?                      // sources / citations (markdown)
+  agentName     String      // which agent wrote it (e.g. "Claude Code")
+  notes         String?     // agent notes
   createdAt   DateTime    @default(now())
   reviewedAt  DateTime?
   reviewedBy  String?     // admin user id

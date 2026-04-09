@@ -12,7 +12,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { action, title, description, content, isPremium } = await req.json();
+  const { action, title, description, content, isPremium, isDeepRoots } = await req.json();
 
   const draft = await prisma.agentDraft.findUnique({ where: { id } });
   if (!draft) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -44,9 +44,11 @@ export async function PATCH(
         content,
         niche: draft.niche,
         isPremium,
+        isDeepRoots: isDeepRoots ?? false,
         status: "PUBLISHED",
         publishedAt: new Date(),
         featuredImage: draft.featuredImage ?? null,
+        references: draft.references ?? null,
       },
     }),
     prisma.agentDraft.update({

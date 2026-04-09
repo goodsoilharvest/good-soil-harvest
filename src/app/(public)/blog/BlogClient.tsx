@@ -69,8 +69,7 @@ export default function BlogClient({ posts }: { posts: Post[] }) {
                 key={post.id}
                 className="bg-[var(--surface)] rounded-2xl overflow-hidden border border-[var(--border)] hover:border-[var(--color-sage-400)] transition-colors shadow-sm"
               >
-                <div className="h-2 w-full" style={{ background: `var(--color-${niche?.color ?? "sage"}-500)` }} />
-                {post.featuredImage && (
+                {post.featuredImage ? (
                   <div className="relative w-full h-44 overflow-hidden">
                     <Image
                       src={post.featuredImage}
@@ -80,6 +79,8 @@ export default function BlogClient({ posts }: { posts: Post[] }) {
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   </div>
+                ) : (
+                  <div className="h-2 w-full" style={{ background: `var(--color-${niche?.color ?? "sage"}-500)` }} />
                 )}
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
