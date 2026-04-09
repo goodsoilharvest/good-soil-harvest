@@ -46,6 +46,7 @@ export async function PATCH(
         isPremium,
         status: "PUBLISHED",
         publishedAt: new Date(),
+        featuredImage: draft.featuredImage ?? null,
       },
     }),
     prisma.agentDraft.update({

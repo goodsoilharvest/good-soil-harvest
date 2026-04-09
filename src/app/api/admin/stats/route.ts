@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-  const [users, postCounts, draftCounts, totalViews, totalLikes, aiLogs] = await Promise.all([
+  const [users, postCounts, draftCounts, totalViews, totalLikes, aiLogs, imageCount] = await Promise.all([
     prisma.user.findMany({
       select: {
         id: true,
@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
       select: { userId: true, inputTokens: true, outputTokens: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.post.count({ where: { featuredImage: { not: null } } }),
   ]);
 
   // Haiku 4.5 pricing: $0.80/M input, $4.00/M output
@@ -43,6 +44,10 @@ export async function GET(req: NextRequest) {
   const estimatedCostUsd = parseFloat(
     (totalInput * 0.0000008 + totalOutput * 0.000004).toFixed(6)
   );
+
+  // Image generation pricing: Together AI $0.0027/image + Claude Haiku ~$0.0001/prompt
+  const imageCostPerUnit = 0.0028;
+  const imageCostEst = parseFloat((imageCount * imageCostPerUnit).toFixed(4));
 
   return NextResponse.json({
     users,
@@ -55,6 +60,11 @@ export async function GET(req: NextRequest) {
       outputTokens30d: totalOutput,
       estimatedCostUsd,
       recent: aiLogs.slice(0, 25),
+    },
+    images: {
+      totalGenerated: imageCount,
+      costPerImage: imageCostPerUnit,
+      estimatedCostUsd: imageCostEst,
     },
     generatedAt: new Date().toISOString(),
   });
