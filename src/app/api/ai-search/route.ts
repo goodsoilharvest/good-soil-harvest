@@ -55,6 +55,15 @@ export async function POST(req: NextRequest) {
     ],
   });
 
+  // Log token usage for cost tracking (fire-and-forget)
+  prisma.aiSearchLog.create({
+    data: {
+      userId: session.user.id,
+      inputTokens: message.usage.input_tokens,
+      outputTokens: message.usage.output_tokens,
+    },
+  }).catch(() => {});
+
   // Response starts after our "[" prefill, so prepend it back
   const raw = "[" + (message.content[0].type === "text" ? message.content[0].text.trim() : "");
 

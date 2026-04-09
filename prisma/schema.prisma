@@ -22,6 +22,7 @@ model User {
   subscription    Subscription?
   postLikes       PostLike[]
   postViews       PostView[]
+  aiSearchLogs    AiSearchLog[]
 }
 
 model Session {
@@ -147,6 +148,17 @@ enum DraftStatus {
   APPROVED   // moved to Post table as APPROVED
   REJECTED
   EDITED     // approved with modifications
+}
+
+// ─── AI Usage Logging ────────────────────────────────────────────────────────
+
+model AiSearchLog {
+  id           String   @id @default(cuid())
+  userId       String
+  inputTokens  Int
+  outputTokens Int
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Affiliate Links ─────────────────────────────────────────────────────────
