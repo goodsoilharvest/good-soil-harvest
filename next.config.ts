@@ -3,10 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      // Together AI image generation CDN
-      { hostname: "cdn.together.ai" },
+      // Together AI (fallback — short-lived, only for local testing)
       { hostname: "api.together.ai" },
-      // Wildcard for any Together AI CDN subdomain
       { hostname: "*.together.ai" },
     ],
   },
