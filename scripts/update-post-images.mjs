@@ -1,38 +1,42 @@
 /**
  * update-post-images.mjs
- * Fetches a relevant Unsplash image for every published post that lacks one.
+ * Generates a featured image for every published post that lacks one,
+ * using Together AI (Flux Schnell). Stores the returned CDN URL in the DB.
  *
  * Usage:
- *   UNSPLASH_ACCESS_KEY=<your_key> node scripts/update-post-images.mjs
+ *   TOGETHER_API_KEY=<your_key> node scripts/update-post-images.mjs
  *
- * Unsplash free tier: 5,000 req/hr. 100 posts = 100 requests — well within limits.
- * Rate-limited to 1 request/second to be a good citizen.
+ * Together AI free model: black-forest-labs/FLUX.1-schnell-Free (~$0 while credits last)
+ * Paid fallback:          black-forest-labs/FLUX.1-schnell     (~$0.0013/image)
+ *
+ * Rate-limited to 1 request/second.
  */
 
-import { PrismaNeon } from "@prisma/adapter-neon";
-import { PrismaClient } from "@prisma/client";
-import { neon } from "@neondatabase/serverless";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
 
-// Load env from .env if not already set
+// Load .env
 const envPath = resolve(process.cwd(), ".env");
 try {
   const env = readFileSync(envPath, "utf8");
   for (const line of env.split("\n")) {
-    const [key, ...rest] = line.split("=");
-    if (key && rest.length && !process.env[key.trim()]) {
-      process.env[key.trim()] = rest.join("=").trim();
+    const eqIdx = line.indexOf("=");
+    if (eqIdx < 0) continue;
+    const key = line.slice(0, eqIdx).trim();
+    let val = line.slice(eqIdx + 1).trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
     }
+    if (key && !process.env[key]) process.env[key] = val;
   }
 } catch {}
 
-const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
+const TOGETHER_KEY = process.env.TOGETHER_API_KEY;
 const DATABASE_URL = process.env.DATABASE_URL;
 
-if (!UNSPLASH_KEY) {
-  console.error("ERROR: UNSPLASH_ACCESS_KEY env var is required.");
-  console.error("Get a free key at https://unsplash.com/developers");
+if (!TOGETHER_KEY) {
+  console.error("ERROR: TOGETHER_API_KEY env var is required.");
+  console.error("Get a free key at https://together.ai");
   process.exit(1);
 }
 if (!DATABASE_URL) {
@@ -40,100 +44,100 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
+const { neon } = await import("@neondatabase/serverless");
 const sql = neon(DATABASE_URL);
-const adapter = new PrismaNeon(sql);
-const prisma = new PrismaClient({ adapter });
 
-// Niche → search query that reliably returns great images
-const NICHE_QUERIES = {
-  faith: "church light spiritual",
-  finance: "money finance savings",
-  psychology: "mind meditation calm",
-  philosophy: "books thinking wisdom",
-  science: "science laboratory research",
+// Niche → descriptive style hint for better prompts
+const NICHE_STYLE = {
+  faith:      "peaceful church interior with warm golden light, spiritual atmosphere, soft bokeh",
+  finance:    "clean minimal financial concept, coins or growth chart, professional, warm tones",
+  psychology: "calm contemplative mood, soft light, human silhouette or abstract mind concept",
+  philosophy: "ancient books and candle light, philosophical atmosphere, moody dramatic lighting",
+  science:    "modern laboratory or technology concept, clean scientific aesthetic, blue tones",
 };
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function fetchUnsplashImage(query) {
-  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=10&orientation=landscape&content_filter=high`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
+async function generateImage(prompt) {
+  const body = JSON.stringify({
+    model: "black-forest-labs/FLUX.1-schnell-Free",
+    prompt,
+    width: 1216,
+    height: 832,
+    steps: 4,
+    n: 1,
+    response_format: "url",
+  });
+
+  const res = await fetch("https://api.together.xyz/v1/images/generations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${TOGETHER_KEY}`,
+    },
+    body,
   });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Unsplash ${res.status}: ${text}`);
+    // Try paid model if free is rate-limited
+    if (res.status === 429 || text.includes("rate")) {
+      throw new Error(`Rate limited (${res.status})`);
+    }
+    throw new Error(`Together AI ${res.status}: ${text.slice(0, 200)}`);
   }
 
   const data = await res.json();
-  if (!data.results?.length) return null;
-
-  // Pick a random result from first 5 to add variety
-  const pick = data.results[Math.floor(Math.random() * Math.min(5, data.results.length))];
-  return pick.urls.regular; // 1080px wide, CDN-optimized
+  return data?.data?.[0]?.url ?? null;
 }
 
 async function main() {
-  const posts = await prisma.post.findMany({
-    where: { status: "PUBLISHED", featuredImage: null },
-    select: { id: true, title: true, niche: true },
-    orderBy: { publishedAt: "desc" },
-  });
+  // Fetch posts without images
+  const posts = await sql`
+    SELECT id, title, niche
+    FROM "Post"
+    WHERE status = 'PUBLISHED' AND "featuredImage" IS NULL
+    ORDER BY "publishedAt" DESC
+  `;
 
   if (posts.length === 0) {
     console.log("No posts need images. All done!");
     return;
   }
 
-  console.log(`Found ${posts.length} posts without images. Fetching from Unsplash...\n`);
+  console.log(`Found ${posts.length} posts without images. Generating with Together AI (Flux Schnell)...\n`);
 
   let success = 0;
   let failed = 0;
 
   for (const post of posts) {
-    // Build query: niche default + first 3 meaningful words from title
-    const titleWords = post.title
-      .toLowerCase()
-      .replace(/[^a-z0-9 ]/g, "")
-      .split(" ")
-      .filter((w) => w.length > 3)
-      .slice(0, 3)
-      .join(" ");
-    const nicheQuery = NICHE_QUERIES[post.niche] ?? post.niche;
-    const query = titleWords ? `${titleWords} ${nicheQuery}` : nicheQuery;
+    const nicheStyle = NICHE_STYLE[post.niche] ?? "nature landscape, beautiful photography";
+
+    // Build a focused prompt: descriptive but short (Flux Schnell likes concise prompts)
+    const titleClean = post.title.replace(/[^a-zA-Z0-9 ,]/g, "").slice(0, 60);
+    const prompt = `${nicheStyle}, editorial blog photo for article titled "${titleClean}", high quality, photorealistic`;
 
     try {
-      const imageUrl = await fetchUnsplashImage(query);
+      const imageUrl = await generateImage(prompt);
       if (!imageUrl) {
-        // Fall back to niche-only query
-        const fallback = await fetchUnsplashImage(nicheQuery);
-        if (!fallback) {
-          console.log(`  SKIP  [${post.niche}] ${post.title} — no results`);
-          failed++;
-          await sleep(1000);
-          continue;
-        }
-        await prisma.post.update({ where: { id: post.id }, data: { featuredImage: fallback } });
-        console.log(`  OK    [${post.niche}] ${post.title} (fallback query)`);
+        console.log(`  SKIP  [${post.niche}] ${post.title} — no URL returned`);
+        failed++;
       } else {
-        await prisma.post.update({ where: { id: post.id }, data: { featuredImage: imageUrl } });
+        await sql`UPDATE "Post" SET "featuredImage" = ${imageUrl} WHERE id = ${post.id}`;
         console.log(`  OK    [${post.niche}] ${post.title}`);
+        success++;
       }
-      success++;
     } catch (err) {
       console.error(`  FAIL  [${post.niche}] ${post.title} — ${err.message}`);
       failed++;
     }
 
-    // 1 req/sec to respect Unsplash rate limits
-    await sleep(1000);
+    await sleep(1200); // ~50 req/min, well within Together AI limits
   }
 
   console.log(`\nDone. ${success} updated, ${failed} skipped/failed.`);
-  await prisma.$disconnect();
 }
 
 main().catch((err) => {

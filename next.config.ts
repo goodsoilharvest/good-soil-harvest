@@ -3,8 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      { hostname: "images.unsplash.com" },
-      { hostname: "plus.unsplash.com" },
+      // Together AI image generation CDN
+      { hostname: "cdn.together.ai" },
+      { hostname: "api.together.ai" },
+      // Wildcard for any Together AI CDN subdomain
+      { hostname: "*.together.ai" },
     ],
   },
 };
