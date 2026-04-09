@@ -53,7 +53,7 @@ export default function NewPostPage() {
             ← Back to Posts
           </Link>
           <span className="text-[var(--color-soil-300)]">·</span>
-          <span className="text-sm font-semibold text-[var(--color-soil-800)]">New Post</span>
+          <span className="text-sm font-semibold text-white">New Post</span>
         </div>
         <button
           onClick={handleCreate}
@@ -67,20 +67,20 @@ export default function NewPostPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main editor */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-[var(--color-sage-100)]">
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-soil-500)] mb-1">
+          <div className="bg-[var(--color-soil-800)] rounded-xl p-6 border border-white/10">
+            <label className="block text-xs font-semibold uppercase tracking-wide text-white/50 mb-1">
               Title
             </label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Post title…"
-              className="w-full font-serif text-2xl font-bold text-[var(--color-soil-800)] bg-transparent border-none outline-none placeholder:text-[var(--color-soil-300)] focus:bg-[var(--color-sage-50)] rounded px-1 -mx-1 transition-colors"
+              className="w-full font-serif text-2xl font-bold text-white bg-transparent border-none outline-none placeholder:text-white/30 focus:bg-white/5 rounded px-1 -mx-1 transition-colors"
             />
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-[var(--color-sage-100)]">
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-soil-500)] mb-1">
+          <div className="bg-[var(--color-soil-800)] rounded-xl p-6 border border-white/10">
+            <label className="block text-xs font-semibold uppercase tracking-wide text-white/50 mb-1">
               Description / Excerpt
             </label>
             <textarea
@@ -88,12 +88,12 @@ export default function NewPostPage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description shown in post listings…"
               rows={3}
-              className="w-full text-sm text-[var(--color-soil-700)] bg-transparent border-none outline-none resize-none placeholder:text-[var(--color-soil-300)] focus:bg-[var(--color-sage-50)] rounded px-1 -mx-1 transition-colors"
+              className="w-full text-sm text-white/80 bg-transparent border-none outline-none resize-none placeholder:text-white/30 focus:bg-white/5 rounded px-1 -mx-1 transition-colors"
             />
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-[var(--color-sage-100)]">
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-soil-500)] mb-2">
+          <div className="bg-[var(--color-soil-800)] rounded-xl p-6 border border-white/10">
+            <label className="block text-xs font-semibold uppercase tracking-wide text-white/50 mb-2">
               Content (MDX)
             </label>
             <textarea
@@ -101,26 +101,26 @@ export default function NewPostPage() {
               onChange={(e) => setContent(e.target.value)}
               placeholder="Write markdown content here…"
               rows={35}
-              className="w-full text-sm font-mono text-[var(--color-soil-800)] bg-[var(--color-parchment)] rounded-lg p-4 border border-[var(--color-sage-100)] focus:outline-none focus:border-[var(--color-sage-400)] resize-y placeholder:text-[var(--color-soil-300)]"
+              className="w-full text-sm font-mono text-white/90 bg-[var(--color-soil-900)] rounded-lg p-4 border border-white/10 focus:outline-none focus:border-white/30 resize-y placeholder:text-white/30"
             />
           </div>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-[var(--color-sage-100)]">
-            <h3 className="font-semibold text-[var(--color-soil-800)] mb-4 text-sm">
+          <div className="bg-[var(--color-soil-800)] rounded-xl p-5 border border-white/10">
+            <h3 className="font-semibold text-white mb-4 text-sm">
               Post Settings
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-soil-500)] mb-1">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-white/50 mb-1">
                   Status
                 </label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full text-sm text-[var(--color-soil-800)] bg-white border border-[var(--color-sage-200)] rounded-lg px-3 py-2 focus:outline-none focus:border-[var(--color-sage-400)]"
+                  className="w-full text-sm text-white bg-[var(--color-soil-900)] border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-white/30"
                 >
                   <option value="DRAFT">Draft</option>
                   <option value="APPROVED">Approved</option>
@@ -129,13 +129,13 @@ export default function NewPostPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-soil-500)] mb-1">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-white/50 mb-1">
                   Niche
                 </label>
                 <select
                   value={niche}
                   onChange={(e) => setNiche(e.target.value)}
-                  className="w-full text-sm text-[var(--color-soil-800)] bg-white border border-[var(--color-sage-200)] rounded-lg px-3 py-2 focus:outline-none focus:border-[var(--color-sage-400)]"
+                  className="w-full text-sm text-white bg-[var(--color-soil-900)] border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-white/30"
                 >
                   {nicheOptions.map((n) => (
                     <option key={n.value} value={n.value}>{n.label}</option>
@@ -144,11 +144,11 @@ export default function NewPostPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-[var(--color-soil-600)]">Premium</span>
+                <span className="text-sm text-white/70">Premium</span>
                 <button
                   onClick={() => setIsPremium(!isPremium)}
                   className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${
-                    isPremium ? "bg-[var(--color-harvest-500)]" : "bg-gray-200"
+                    isPremium ? "bg-[var(--color-harvest-500)]" : "bg-white/20"
                   }`}
                 >
                   <span

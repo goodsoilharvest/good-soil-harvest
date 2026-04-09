@@ -34,11 +34,11 @@ const statusOptions = [
 ];
 
 const statusColors: Record<string, string> = {
-  DRAFT:     "bg-gray-100 text-gray-700",
-  APPROVED:  "bg-blue-100 text-blue-700",
-  PUBLISHED: "bg-green-100 text-green-800",
-  REJECTED:  "bg-red-100 text-red-700",
-  ARCHIVED:  "bg-yellow-100 text-yellow-700",
+  DRAFT:     "bg-gray-700/30 text-gray-300",
+  APPROVED:  "bg-blue-900/30 text-blue-300",
+  PUBLISHED: "bg-green-900/30 text-green-400",
+  REJECTED:  "bg-red-900/30 text-red-400",
+  ARCHIVED:  "bg-yellow-900/30 text-yellow-300",
 };
 
 export default function PostEditClient({ post }: { post: Post }) {
@@ -130,58 +130,58 @@ export default function PostEditClient({ post }: { post: Post }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main editor */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-[var(--color-sage-100)]">
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-soil-500)] mb-1">
+          <div className="bg-[var(--color-soil-800)] rounded-xl p-6 border border-white/10">
+            <label className="block text-xs font-semibold uppercase tracking-wide text-white/50 mb-1">
               Title
             </label>
             <input
               value={title}
               onChange={(e) => { setTitle(e.target.value); markDirty(); }}
-              className="w-full font-serif text-2xl font-bold text-[var(--color-soil-800)] bg-transparent border-none outline-none focus:bg-[var(--color-sage-50)] rounded px-1 -mx-1 transition-colors"
+              className="w-full font-serif text-2xl font-bold text-white bg-transparent border-none outline-none focus:bg-white/5 rounded px-1 -mx-1 transition-colors"
             />
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-[var(--color-sage-100)]">
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-soil-500)] mb-1">
+          <div className="bg-[var(--color-soil-800)] rounded-xl p-6 border border-white/10">
+            <label className="block text-xs font-semibold uppercase tracking-wide text-white/50 mb-1">
               Description / Excerpt
             </label>
             <textarea
               value={description}
               onChange={(e) => { setDescription(e.target.value); markDirty(); }}
               rows={3}
-              className="w-full text-sm text-[var(--color-soil-700)] bg-transparent border-none outline-none resize-none focus:bg-[var(--color-sage-50)] rounded px-1 -mx-1 transition-colors"
+              className="w-full text-sm text-white/80 bg-transparent border-none outline-none resize-none focus:bg-white/5 rounded px-1 -mx-1 transition-colors"
             />
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-[var(--color-sage-100)]">
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-soil-500)] mb-2">
+          <div className="bg-[var(--color-soil-800)] rounded-xl p-6 border border-white/10">
+            <label className="block text-xs font-semibold uppercase tracking-wide text-white/50 mb-2">
               Content (MDX)
             </label>
             <textarea
               value={content}
               onChange={(e) => { setContent(e.target.value); markDirty(); }}
               rows={35}
-              className="w-full text-sm font-mono text-[var(--color-soil-800)] bg-[var(--color-parchment)] rounded-lg p-4 border border-[var(--color-sage-100)] focus:outline-none focus:border-[var(--color-sage-400)] resize-y"
+              className="w-full text-sm font-mono text-white/90 bg-[var(--color-soil-900)] rounded-lg p-4 border border-white/10 focus:outline-none focus:border-white/30 resize-y"
             />
           </div>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-[var(--color-sage-100)]">
-            <h3 className="font-semibold text-[var(--color-soil-800)] mb-4 text-sm">
+          <div className="bg-[var(--color-soil-800)] rounded-xl p-5 border border-white/10">
+            <h3 className="font-semibold text-white mb-4 text-sm">
               Post Settings
             </h3>
             <div className="space-y-4">
               {/* Status */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-soil-500)] mb-1">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-white/50 mb-1">
                   Status
                 </label>
                 <select
                   value={status}
                   onChange={(e) => { setStatus(e.target.value); markDirty(); }}
-                  className="w-full text-sm text-[var(--color-soil-800)] bg-white border border-[var(--color-sage-200)] rounded-lg px-3 py-2 focus:outline-none focus:border-[var(--color-sage-400)]"
+                  className="w-full text-sm text-white bg-[var(--color-soil-900)] border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-white/30"
                 >
                   {statusOptions.map((s) => (
                     <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
@@ -191,13 +191,13 @@ export default function PostEditClient({ post }: { post: Post }) {
 
               {/* Niche */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-soil-500)] mb-1">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-white/50 mb-1">
                   Niche
                 </label>
                 <select
                   value={niche}
                   onChange={(e) => { setNiche(e.target.value); markDirty(); }}
-                  className="w-full text-sm text-[var(--color-soil-800)] bg-white border border-[var(--color-sage-200)] rounded-lg px-3 py-2 focus:outline-none focus:border-[var(--color-sage-400)]"
+                  className="w-full text-sm text-white bg-[var(--color-soil-900)] border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-white/30"
                 >
                   {nicheOptions.map((n) => (
                     <option key={n.value} value={n.value}>{n.label}</option>
@@ -207,11 +207,11 @@ export default function PostEditClient({ post }: { post: Post }) {
 
               {/* Premium toggle */}
               <div className="flex items-center justify-between">
-                <span className="text-sm text-[var(--color-soil-600)]">Premium</span>
+                <span className="text-sm text-white/70">Premium</span>
                 <button
                   onClick={() => { setIsPremium(!isPremium); markDirty(); }}
                   className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${
-                    isPremium ? "bg-[var(--color-harvest-500)]" : "bg-gray-200"
+                    isPremium ? "bg-[var(--color-harvest-500)]" : "bg-white/20"
                   }`}
                 >
                   <span
@@ -225,9 +225,9 @@ export default function PostEditClient({ post }: { post: Post }) {
           </div>
 
           {/* Metadata */}
-          <div className="bg-[var(--color-sage-50)] rounded-xl p-5 border border-[var(--color-sage-200)]">
-            <h3 className="font-semibold text-[var(--color-soil-800)] mb-3 text-sm">Info</h3>
-            <div className="space-y-2 text-xs text-[var(--color-soil-500)]">
+          <div className="bg-[var(--color-soil-800)] rounded-xl p-5 border border-white/10">
+            <h3 className="font-semibold text-white mb-3 text-sm">Info</h3>
+            <div className="space-y-2 text-xs text-white/50">
               <div>
                 <span className="font-medium">Slug:</span>{" "}
                 <span className="font-mono break-all">{post.slug}</span>
@@ -250,12 +250,12 @@ export default function PostEditClient({ post }: { post: Post }) {
           </div>
 
           {/* Danger zone */}
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-red-100">
-            <h3 className="font-semibold text-red-700 mb-3 text-sm">Danger Zone</h3>
+          <div className="bg-[var(--color-soil-800)] rounded-xl p-5 border border-red-900/40">
+            <h3 className="font-semibold text-red-400 mb-3 text-sm">Danger Zone</h3>
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="w-full py-2 rounded-lg border border-red-300 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
+              className="w-full py-2 rounded-lg border border-red-700/50 text-red-400 text-sm font-semibold hover:bg-red-900/20 transition-colors disabled:opacity-50"
             >
               {deleting ? "Deleting…" : "Delete Post"}
             </button>

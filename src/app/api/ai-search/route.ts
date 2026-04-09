@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   const posts = await prisma.post.findMany({
     where: { status: "PUBLISHED" },
-    select: { id: true, slug: true, title: true, description: true, niche: true, isPremium: true, isDeepRoots: true, publishedAt: true },
+    select: { id: true, slug: true, title: true, description: true, niche: true, isPremium: true, isDeepRoots: true, publishedAt: true, featuredImage: true },
     orderBy: { publishedAt: "desc" },
   });
 

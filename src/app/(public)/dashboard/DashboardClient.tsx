@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 type Post = {
   id: string;
@@ -13,6 +14,7 @@ type Post = {
   isPremium: boolean;
   isDeepRoots: boolean;
   publishedAt: Date | null;
+  featuredImage: string | null;
 };
 
 type Props = {
@@ -53,26 +55,39 @@ function PostCard({ post }: { post: Post }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group bg-[var(--surface)] rounded-2xl p-5 border border-[var(--border)] hover:border-[var(--color-sage-400)] transition-colors block"
+      className="group bg-[var(--surface)] rounded-2xl border border-[var(--border)] hover:border-[var(--color-sage-400)] transition-colors block overflow-hidden"
     >
-      <div className="flex items-center gap-2 mb-2 flex-wrap">
-        <span className={`text-xs font-semibold uppercase tracking-wide ${nicheColors[post.niche] ?? ""}`}>
-          {nicheLabels[post.niche] ?? post.niche}
-        </span>
-        {fresh && (
-          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">NEW</span>
-        )}
-        {post.isDeepRoots && (
-          <span className="text-xs font-semibold text-[var(--color-harvest-600)] border border-[var(--color-harvest-300)] rounded-full px-2 py-0.5">🌾 Deep Roots</span>
-        )}
-        {post.isPremium && !post.isDeepRoots && (
-          <span className="text-xs font-semibold text-[var(--color-sage-600)] border border-[var(--color-sage-300)] rounded-full px-2 py-0.5">🌱 Premium</span>
-        )}
+      {post.featuredImage && (
+        <div className="relative w-full h-40">
+          <Image
+            src={post.featuredImage}
+            alt={post.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        </div>
+      )}
+      <div className="p-5">
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <span className={`text-xs font-semibold uppercase tracking-wide ${nicheColors[post.niche] ?? ""}`}>
+            {nicheLabels[post.niche] ?? post.niche}
+          </span>
+          {fresh && (
+            <span className="text-xs font-bold text-[var(--color-sage-700)] bg-[var(--color-sage-100)] border border-[var(--color-sage-200)] rounded-full px-2 py-0.5">NEW</span>
+          )}
+          {post.isDeepRoots && (
+            <span className="text-xs font-semibold text-[var(--color-harvest-600)] border border-[var(--color-harvest-300)] rounded-full px-2 py-0.5">🌾 Deep Roots</span>
+          )}
+          {post.isPremium && !post.isDeepRoots && (
+            <span className="text-xs font-semibold text-[var(--color-sage-600)] border border-[var(--color-sage-300)] rounded-full px-2 py-0.5">🌱 Premium</span>
+          )}
+        </div>
+        <h3 className="font-serif font-bold text-[var(--foreground)] leading-snug mb-2 group-hover:text-[var(--color-sage-600)] transition-colors">
+          {post.title}
+        </h3>
+        <p className="text-sm text-[var(--text-muted)] line-clamp-2">{post.description}</p>
       </div>
-      <h3 className="font-serif font-bold text-[var(--foreground)] leading-snug mb-2 group-hover:text-[var(--color-sage-600)] transition-colors">
-        {post.title}
-      </h3>
-      <p className="text-sm text-[var(--text-muted)] line-clamp-2">{post.description}</p>
     </Link>
   );
 }
@@ -86,6 +101,7 @@ function trialDaysLeft(trialEnd: string | null): number | null {
 
 function DiscoverUpsell({ isPaid }: { isPaid: boolean }) {
   const [loading, setLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   async function upgrade() {
     setLoading(true);
@@ -126,16 +142,42 @@ function DiscoverUpsell({ isPaid }: { isPaid: boolean }) {
         ))}
       </div>
 
-      <button
-        onClick={upgrade}
-        disabled={loading}
-        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold hover:bg-[var(--color-harvest-400)] transition-colors disabled:opacity-50"
-      >
-        {loading ? "Loading…" : "Upgrade to Deep Roots — $9.99/mo"}
-      </button>
-      <p className="text-xs text-[var(--text-muted)] mt-3">
-        {isPaid ? "Upgrade from Seedling — cancel anytime." : "7-day free trial — no charge until trial ends."}
-      </p>
+      {isPaid && confirming ? (
+        <div className="rounded-2xl border border-[var(--color-harvest-200)] bg-[var(--color-harvest-50)] p-6 text-left mb-4">
+          <p className="font-semibold text-[var(--foreground)] mb-1">Confirm upgrade to Deep Roots</p>
+          <p className="text-sm text-[var(--text-muted)] mb-4">
+            You&apos;ll be upgraded from Seedling to Deep Roots ($9.99/mo). A prorated charge for the remainder of your billing period will be applied immediately.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={upgrade}
+              disabled={loading}
+              className="flex-1 py-2.5 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold text-sm hover:bg-[var(--color-harvest-600)] transition-colors disabled:opacity-50"
+            >
+              {loading ? "Upgrading…" : "Yes, upgrade now"}
+            </button>
+            <button
+              onClick={() => setConfirming(false)}
+              className="px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <button
+            onClick={() => isPaid ? setConfirming(true) : upgrade()}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold hover:bg-[var(--color-harvest-400)] transition-colors disabled:opacity-50"
+          >
+            {loading ? "Loading…" : "Upgrade to Deep Roots — $9.99/mo"}
+          </button>
+          <p className="text-xs text-[var(--text-muted)] mt-3">
+            {isPaid ? "Upgrade from Seedling — prorated charge applies." : "7-day free trial — no charge until trial ends."}
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -206,7 +248,7 @@ function OnboardingCard({ isPaid, isDeepRoots }: { isPaid: boolean; isDeepRoots:
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
         {steps.map(step => (
-          <div key={step.title} className="flex items-start gap-3 rounded-xl bg-white/70 border border-[var(--border)] p-3.5">
+          <div key={step.title} className="flex items-start gap-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] p-3.5">
             <span className="text-xl shrink-0">{step.icon}</span>
             <div>
               <p className="text-sm font-semibold text-[var(--foreground)]">{step.title}</p>

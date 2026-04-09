@@ -32,6 +32,7 @@ export default async function DashboardPage() {
     select: {
       id: true, slug: true, title: true, description: true,
       niche: true, isPremium: true, isDeepRoots: true, publishedAt: true,
+      featuredImage: true,
     },
     orderBy: { publishedAt: "desc" },
     take: 24,

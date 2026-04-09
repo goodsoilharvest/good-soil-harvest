@@ -1,21 +1,23 @@
 /**
  * update-post-images.mjs
- * Generates a featured image for every published post that lacks one,
- * using Together AI (Flux Schnell). Stores the returned CDN URL in the DB.
+ * Generates a featured image for every published post that lacks one.
+ * Uses Claude Haiku to write a specific visual prompt, then Together AI
+ * (Flux Schnell) to render it. Stores the CDN URL in the DB.
  *
  * Usage:
- *   TOGETHER_API_KEY=<your_key> node scripts/update-post-images.mjs
+ *   node scripts/update-post-images.mjs
+ *   node scripts/update-post-images.mjs --regenerate   # wipe + redo all
  *
- * Together AI free model: black-forest-labs/FLUX.1-schnell-Free (~$0 while credits last)
- * Paid fallback:          black-forest-labs/FLUX.1-schnell     (~$0.0013/image)
+ * Together AI: black-forest-labs/FLUX.1-schnell  (~$0.0027/image)
+ * Claude Haiku: ~$0.0001/post for prompt generation
  *
- * Rate-limited to 1 request/second.
+ * Rate-limited to 1 image/second.
  */
 
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync } from "fs";
 import { resolve } from "path";
 
-// Load .env
+// ── Load .env ──────────────────────────────────────────────────────────────
 const envPath = resolve(process.cwd(), ".env");
 try {
   const env = readFileSync(envPath, "utf8");
@@ -31,36 +33,65 @@ try {
   }
 } catch {}
 
-const TOGETHER_KEY = process.env.TOGETHER_API_KEY;
-const DATABASE_URL = process.env.DATABASE_URL;
+const TOGETHER_KEY   = process.env.TOGETHER_API_KEY;
+const ANTHROPIC_KEY  = process.env.ANTHROPIC_API_KEY;
+const DATABASE_URL   = process.env.DATABASE_URL;
 
-if (!TOGETHER_KEY) {
-  console.error("ERROR: TOGETHER_API_KEY env var is required.");
-  console.error("Get a free key at https://together.ai");
-  process.exit(1);
-}
-if (!DATABASE_URL) {
-  console.error("ERROR: DATABASE_URL env var is required.");
-  process.exit(1);
-}
+if (!TOGETHER_KEY)  { console.error("ERROR: TOGETHER_API_KEY env var is required.");  process.exit(1); }
+if (!ANTHROPIC_KEY) { console.error("ERROR: ANTHROPIC_API_KEY env var is required.");  process.exit(1); }
+if (!DATABASE_URL)  { console.error("ERROR: DATABASE_URL env var is required.");        process.exit(1); }
 
 const { neon } = await import("@neondatabase/serverless");
 const sql = neon(DATABASE_URL);
 
-// Niche → descriptive style hint for better prompts
-const NICHE_STYLE = {
-  faith:      "peaceful church interior with warm golden light, spiritual atmosphere, soft bokeh",
-  finance:    "clean minimal financial concept, coins or growth chart, professional, warm tones",
-  psychology: "calm contemplative mood, soft light, human silhouette or abstract mind concept",
-  philosophy: "ancient books and candle light, philosophical atmosphere, moody dramatic lighting",
-  science:    "modern laboratory or technology concept, clean scientific aesthetic, blue tones",
-};
+const REGENERATE = process.argv.includes("--regenerate");
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function generateImage(prompt) {
+// ── Step 1: Ask Claude Haiku for a specific visual prompt ──────────────────
+async function buildVisualPrompt(title, description) {
+  const body = JSON.stringify({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 120,
+    system:
+      "You write concise image prompts for an AI image generator. " +
+      "Given a blog post title and description, output ONE sentence (max 30 words) " +
+      "that describes a specific, photorealistic editorial photograph that visually represents the post's core idea. " +
+      "No generic scenes. Be concrete and specific. Output ONLY the prompt sentence, nothing else.",
+    messages: [
+      {
+        role: "user",
+        content: `Title: ${title}\nDescription: ${description}`,
+      },
+    ],
+  });
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": ANTHROPIC_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Anthropic ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  const raw = data?.content?.[0]?.text?.trim() ?? "";
+  return raw || `Editorial photograph illustrating "${title}"`;
+}
+
+// ── Step 2: Generate the image with Together AI ───────────────────────────
+async function generateImage(visualPrompt) {
+  const prompt = `${visualPrompt}, photorealistic, editorial blog photo, high quality, professional photography`;
+
   const body = JSON.stringify({
     model: "black-forest-labs/FLUX.1-schnell",
     prompt,
@@ -82,7 +113,6 @@ async function generateImage(prompt) {
 
   if (!res.ok) {
     const text = await res.text();
-    // Try paid model if free is rate-limited
     if (res.status === 429 || text.includes("rate")) {
       throw new Error(`Rate limited (${res.status})`);
     }
@@ -93,10 +123,16 @@ async function generateImage(prompt) {
   return data?.data?.[0]?.url ?? null;
 }
 
+// ── Main ──────────────────────────────────────────────────────────────────
 async function main() {
-  // Fetch posts without images
+  if (REGENERATE) {
+    console.log("--regenerate: wiping all featuredImage values…");
+    await sql`UPDATE "Post" SET "featuredImage" = NULL WHERE status = 'PUBLISHED'`;
+    console.log("Done. Will now regenerate all images.\n");
+  }
+
   const posts = await sql`
-    SELECT id, title, niche
+    SELECT id, title, description, niche
     FROM "Post"
     WHERE status = 'PUBLISHED' AND "featuredImage" IS NULL
     ORDER BY "publishedAt" DESC
@@ -107,26 +143,26 @@ async function main() {
     return;
   }
 
-  console.log(`Found ${posts.length} posts without images. Generating with Together AI (Flux Schnell)...\n`);
+  console.log(`Found ${posts.length} posts without images. Generating…\n`);
 
   let success = 0;
   let failed = 0;
 
   for (const post of posts) {
-    const nicheStyle = NICHE_STYLE[post.niche] ?? "nature landscape, beautiful photography";
-
-    // Build a focused prompt: descriptive but short (Flux Schnell likes concise prompts)
-    const titleClean = post.title.replace(/[^a-zA-Z0-9 ,]/g, "").slice(0, 60);
-    const prompt = `${nicheStyle}, editorial blog photo for article titled "${titleClean}", high quality, photorealistic`;
-
     try {
-      const imageUrl = await generateImage(prompt);
+      // Step 1: get a specific visual prompt from Haiku
+      const visualPrompt = await buildVisualPrompt(post.title, post.description ?? "");
+
+      // Step 2: render with Together AI
+      const imageUrl = await generateImage(visualPrompt);
+
       if (!imageUrl) {
         console.log(`  SKIP  [${post.niche}] ${post.title} — no URL returned`);
         failed++;
       } else {
         await sql`UPDATE "Post" SET "featuredImage" = ${imageUrl} WHERE id = ${post.id}`;
         console.log(`  OK    [${post.niche}] ${post.title}`);
+        console.log(`         prompt: ${visualPrompt}`);
         success++;
       }
     } catch (err) {
@@ -134,7 +170,7 @@ async function main() {
       failed++;
     }
 
-    await sleep(1200); // ~50 req/min, well within Together AI limits
+    await sleep(1200); // ~50 req/min, within Together AI limits
   }
 
   console.log(`\nDone. ${success} updated, ${failed} skipped/failed.`);

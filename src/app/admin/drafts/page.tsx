@@ -10,10 +10,10 @@ const nicheLabel: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  PENDING: "bg-yellow-100 text-yellow-800",
-  APPROVED: "bg-green-100 text-green-800",
-  REJECTED: "bg-red-100 text-red-800",
-  EDITED: "bg-blue-100 text-blue-800",
+  PENDING:  "bg-yellow-900/30 text-yellow-300",
+  APPROVED: "bg-green-900/30 text-green-400",
+  REJECTED: "bg-red-900/30 text-red-400",
+  EDITED:   "bg-blue-900/30 text-blue-300",
 };
 
 export default async function DraftsPage() {
@@ -28,25 +28,25 @@ export default async function DraftsPage() {
     <>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-bold text-[var(--color-soil-800)]">
+          <h1 className="font-serif text-3xl font-bold text-white">
             Agent Drafts
           </h1>
-          <p className="text-[var(--color-soil-600)] mt-1">
+          <p className="text-white/60 mt-1">
             {pending.length} pending review
           </p>
         </div>
       </div>
 
       {pending.length === 0 && (
-        <div className="bg-white rounded-xl p-8 text-center border border-[var(--color-sage-100)] mb-8">
+        <div className="bg-[var(--color-soil-800)] rounded-xl p-8 text-center border border-white/10 mb-8">
           <span className="text-4xl block mb-3">✓</span>
-          <p className="text-[var(--color-soil-600)]">All caught up — no drafts pending.</p>
+          <p className="text-white/60">All caught up — no drafts pending.</p>
         </div>
       )}
 
       {pending.length > 0 && (
         <section className="mb-10">
-          <h2 className="font-semibold text-[var(--color-soil-700)] mb-3 uppercase text-xs tracking-widest">
+          <h2 className="font-semibold text-white/50 mb-3 uppercase text-xs tracking-widest">
             Pending Review
           </h2>
           <div className="space-y-3">
@@ -54,24 +54,24 @@ export default async function DraftsPage() {
               <Link
                 key={draft.id}
                 href={`/admin/drafts/${draft.id}`}
-                className="block bg-white rounded-xl p-5 shadow-sm border border-[var(--color-harvest-200)] hover:border-[var(--color-harvest-400)] transition-colors"
+                className="block bg-[var(--color-soil-800)] rounded-xl p-5 border border-[var(--color-harvest-700)/30] hover:border-[var(--color-harvest-500)] transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-sage-600)]">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-sage-400)]">
                         {nicheLabel[draft.niche] ?? draft.niche}
                       </span>
                       {draft.isPremium && (
-                        <span className="text-xs bg-[var(--color-harvest-100)] text-[var(--color-harvest-700)] px-2 py-0.5 rounded-full font-medium">
+                        <span className="text-xs bg-[var(--color-harvest-900)/40] text-[var(--color-harvest-400)] px-2 py-0.5 rounded-full font-medium">
                           Premium
                         </span>
                       )}
                     </div>
-                    <h3 className="font-serif text-lg font-bold text-[var(--color-soil-800)] truncate">
+                    <h3 className="font-serif text-lg font-bold text-white truncate">
                       {draft.title}
                     </h3>
-                    <p className="text-sm text-[var(--color-soil-600)] mt-1 line-clamp-2">
+                    <p className="text-sm text-white/60 mt-1 line-clamp-2">
                       {draft.description}
                     </p>
                   </div>
@@ -79,7 +79,7 @@ export default async function DraftsPage() {
                     <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusColors[draft.status]}`}>
                       {draft.status}
                     </span>
-                    <p className="text-xs text-[var(--color-soil-400)] mt-2">
+                    <p className="text-xs text-white/40 mt-2">
                       by {draft.agentName}
                     </p>
                   </div>
@@ -92,7 +92,7 @@ export default async function DraftsPage() {
 
       {reviewed.length > 0 && (
         <section>
-          <h2 className="font-semibold text-[var(--color-soil-700)] mb-3 uppercase text-xs tracking-widest">
+          <h2 className="font-semibold text-white/50 mb-3 uppercase text-xs tracking-widest">
             Previously Reviewed
           </h2>
           <div className="space-y-2">
@@ -100,9 +100,9 @@ export default async function DraftsPage() {
               <Link
                 key={draft.id}
                 href={`/admin/drafts/${draft.id}`}
-                className="flex items-center justify-between bg-white rounded-xl px-5 py-3 border border-[var(--color-sage-100)] hover:border-[var(--color-sage-300)] transition-colors"
+                className="flex items-center justify-between bg-[var(--color-soil-800)] rounded-xl px-5 py-3 border border-white/10 hover:border-white/20 transition-colors"
               >
-                <span className="text-sm font-medium text-[var(--color-soil-700)] truncate">
+                <span className="text-sm font-medium text-white/70 truncate">
                   {draft.title}
                 </span>
                 <span className={`text-xs font-semibold px-2 py-1 rounded-full shrink-0 ml-4 ${statusColors[draft.status]}`}>

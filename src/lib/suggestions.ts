@@ -9,6 +9,7 @@ export type PostSummary = {
   isPremium: boolean;
   isDeepRoots: boolean;
   publishedAt: Date | null;
+  featuredImage: string | null;
 };
 
 const POST_SELECT = {
@@ -20,6 +21,7 @@ const POST_SELECT = {
   isPremium: true,
   isDeepRoots: true,
   publishedAt: true,
+  featuredImage: true,
 } as const;
 
 /** Posts the user has liked, most recent first */

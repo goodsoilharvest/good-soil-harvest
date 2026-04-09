@@ -11,11 +11,11 @@ const nicheLabel: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  DRAFT:     "bg-gray-100 text-gray-700",
-  APPROVED:  "bg-blue-100 text-blue-700",
-  PUBLISHED: "bg-green-100 text-green-800",
-  REJECTED:  "bg-red-100 text-red-700",
-  ARCHIVED:  "bg-yellow-100 text-yellow-700",
+  DRAFT:     "bg-gray-700/30 text-gray-300",
+  APPROVED:  "bg-blue-900/30 text-blue-300",
+  PUBLISHED: "bg-green-900/30 text-green-400",
+  REJECTED:  "bg-red-900/30 text-red-400",
+  ARCHIVED:  "bg-yellow-900/30 text-yellow-300",
 };
 
 export default async function PostsPage({
@@ -54,10 +54,10 @@ export default async function PostsPage({
     <>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-bold text-[var(--color-soil-800)]">
+          <h1 className="font-serif text-3xl font-bold text-white">
             Posts
           </h1>
-          <p className="text-[var(--color-soil-600)] mt-1">
+          <p className="text-white/60 mt-1">
             {total} {status ? status.toLowerCase() : "total"} posts
           </p>
         </div>
@@ -75,8 +75,8 @@ export default async function PostsPage({
           href="/admin/posts"
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
             !status
-              ? "bg-[var(--color-soil-800)] text-white"
-              : "bg-white border border-[var(--color-sage-200)] text-[var(--color-soil-600)] hover:border-[var(--color-sage-400)]"
+              ? "bg-[var(--color-soil-700)] text-white"
+              : "bg-[var(--color-soil-800)] border border-white/10 text-white/60 hover:border-white/30"
           }`}
         >
           All ({Object.values(countMap).reduce((a, b) => a + b, 0)})
@@ -97,7 +97,7 @@ export default async function PostsPage({
       </div>
 
       {posts.length === 0 ? (
-        <div className="bg-white rounded-xl p-12 text-center border border-[var(--color-sage-100)]">
+        <div className="bg-[var(--color-soil-800)] rounded-xl p-12 text-center border border-white/10">
           <span className="text-4xl block mb-3">📝</span>
           <p className="text-[var(--color-soil-600)]">No posts found.</p>
           <Link href="/admin/posts/new" className="text-sm text-[var(--color-sage-600)] underline mt-2 inline-block">
@@ -112,10 +112,10 @@ export default async function PostsPage({
               <Link
                 key={post.id}
                 href={`/admin/posts/${post.id}`}
-                className={`flex items-center justify-between bg-white rounded-xl px-5 py-4 border transition-colors group ${
+                className={`flex items-center justify-between bg-[var(--color-soil-800)] rounded-xl px-5 py-4 border transition-colors group ${
                   dupe
-                    ? "border-yellow-300 hover:border-yellow-400"
-                    : "border-[var(--color-sage-100)] hover:border-[var(--color-sage-300)]"
+                    ? "border-yellow-700/50 hover:border-yellow-600/70"
+                    : "border-white/10 hover:border-white/20"
                 }`}
               >
                 <div className="flex-1 min-w-0 mr-4">
