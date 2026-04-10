@@ -92,6 +92,25 @@ function AccountDropdown({ isAdmin = false }: { isAdmin?: boolean }) {
 
       {open && (
         <div className="absolute left-0 right-0 mt-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg py-1 z-10">
+          {isAdmin && (
+            <>
+              <Link
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-[var(--color-harvest-700)] hover:bg-[var(--color-harvest-50)] transition-colors"
+              >
+                🛠 Admin / CMS
+              </Link>
+              <Link
+                href="/dashboard"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-[var(--color-sage-700)] hover:bg-[var(--color-sage-50)] transition-colors"
+              >
+                📖 My Feed
+              </Link>
+              <div className="border-t border-[var(--border)] my-1" />
+            </>
+          )}
           <Link
             href="/account/change-password"
             onClick={() => setOpen(false)}
@@ -99,35 +118,39 @@ function AccountDropdown({ isAdmin = false }: { isAdmin?: boolean }) {
           >
             🔑 Change password
           </Link>
-          <Link
-            href="/contact"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--surface-muted)] transition-colors"
-          >
-            💬 Contact / Support
-          </Link>
-          <div className="border-t border-[var(--border)] my-1" />
-          <Link
-            href="/terms"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)] transition-colors"
-          >
-            Terms of Service
-          </Link>
-          <Link
-            href="/privacy"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)] transition-colors"
-          >
-            Privacy Policy
-          </Link>
-          <Link
-            href="/disclaimer"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)] transition-colors"
-          >
-            Disclaimer
-          </Link>
+          {!isAdmin && (
+            <>
+              <Link
+                href="/contact"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--surface-muted)] transition-colors"
+              >
+                💬 Contact / Support
+              </Link>
+              <div className="border-t border-[var(--border)] my-1" />
+              <Link
+                href="/terms"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)] transition-colors"
+              >
+                Terms of Service
+              </Link>
+              <Link
+                href="/privacy"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)] transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                href="/disclaimer"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)] transition-colors"
+              >
+                Disclaimer
+              </Link>
+            </>
+          )}
           <div className="border-t border-[var(--border)] my-1" />
           <button
             onClick={() => signOut({ callbackUrl: "/" })}

@@ -38,16 +38,24 @@ export default async function AdminLayout({
               </Link>
             </nav>
           </div>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/admin-login" });
-            }}
-          >
-            <button type="submit" className="text-sm text-white/60 hover:text-white transition-colors">
-              Sign out
-            </button>
-          </form>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="text-sm text-[var(--color-sage-300)] hover:text-white transition-colors"
+            >
+              ← My Feed
+            </Link>
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/admin-login" });
+              }}
+            >
+              <button type="submit" className="text-sm text-white/60 hover:text-white transition-colors">
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 

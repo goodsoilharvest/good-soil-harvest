@@ -17,6 +17,7 @@ export function Header() {
   const isAuthed = status === "authenticated";
   const plan = session?.user?.subscriptionPlan as string | null | undefined;
   const isActive = session?.user?.subscriptionStatus === "ACTIVE";
+  const isAdmin = (session?.user as { role?: string } | undefined)?.role === "ADMIN";
 
   const logoHref = isAuthed ? "/dashboard" : "/";
 
@@ -60,17 +61,31 @@ export function Header() {
               {status === "loading" ? (
                 <div className="w-16 h-7 rounded-full bg-white/10 animate-pulse" />
               ) : isAuthed ? (
-                <Link
-                  href="/account"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-white/10 hover:bg-white/20 transition-colors"
-                >
-                  <span className="text-xs">⚙</span>
-                  {plan && isActive ? (
-                    <span className="text-[var(--color-harvest-300)]">{planLabel[plan] ?? "Settings"}</span>
-                  ) : (
-                    <span>Settings</span>
+                <>
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-[var(--color-harvest-500)]/20 text-[var(--color-harvest-300)] hover:bg-[var(--color-harvest-500)]/30 transition-colors"
+                      title="Admin / CMS"
+                    >
+                      <span className="text-xs">🛠</span>
+                      <span>Admin</span>
+                    </Link>
                   )}
-                </Link>
+                  <Link
+                    href="/account"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-white/10 hover:bg-white/20 transition-colors"
+                  >
+                    <span className="text-xs">⚙</span>
+                    {isAdmin ? (
+                      <span className="text-[var(--color-harvest-300)]">👑 Owner</span>
+                    ) : plan && isActive ? (
+                      <span className="text-[var(--color-harvest-300)]">{planLabel[plan] ?? "Settings"}</span>
+                    ) : (
+                      <span>Settings</span>
+                    )}
+                  </Link>
+                </>
               ) : (
                 <>
                   <Link
@@ -133,9 +148,20 @@ export function Header() {
             </Link>
             <div className="border-t border-white/10 mt-2 pt-2 flex flex-col gap-1">
               {isAuthed ? (
-                <Link href="/account" onClick={() => setMenuOpen(false)} className="px-3 py-2 rounded text-sm font-semibold text-white/60 hover:bg-white/10">
-                  ⚙ {plan && isActive ? (planLabel[plan] ?? "Settings") : "Settings"}
-                </Link>
+                <>
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setMenuOpen(false)}
+                      className="px-3 py-2 rounded text-sm font-semibold text-[var(--color-harvest-300)] bg-[var(--color-harvest-500)]/15 hover:bg-[var(--color-harvest-500)]/25"
+                    >
+                      🛠 Admin / CMS
+                    </Link>
+                  )}
+                  <Link href="/account" onClick={() => setMenuOpen(false)} className="px-3 py-2 rounded text-sm font-semibold text-white/60 hover:bg-white/10">
+                    ⚙ {isAdmin ? "👑 Owner" : (plan && isActive ? (planLabel[plan] ?? "Settings") : "Settings")}
+                  </Link>
+                </>
               ) : (
                 <>
                   <Link href="/sign-in" onClick={() => setMenuOpen(false)} className="px-3 py-2 rounded text-sm font-medium text-white/80 hover:text-white hover:bg-white/10">
