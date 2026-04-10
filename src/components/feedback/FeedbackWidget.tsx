@@ -14,7 +14,18 @@ export function FeedbackWidget() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
-  // Hide entirely for non-authenticated users and admin users
+  // ALL hooks must be called unconditionally and in the same order on every
+  // render — early returns before hooks cause React error #310.
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Hide entirely for non-authenticated users and admin users (after all hooks)
   const role = (session?.user as { role?: string } | undefined)?.role;
   if (status !== "authenticated" || role === "ADMIN") return null;
 
@@ -49,16 +60,6 @@ export function FeedbackWidget() {
       setSubmitting(false);
     }
   }
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
 
   return (
     <>
