@@ -101,18 +101,19 @@ function trialDaysLeft(trialEnd: string | null): number | null {
 
 function DiscoverUpsell({ isPaid }: { isPaid: boolean }) {
   const [loading, setLoading] = useState(false);
-  const [confirming, setConfirming] = useState(false);
 
   async function upgrade() {
     setLoading(true);
-    const res = await fetch("/api/stripe/checkout", {
+    // Already subscribed → route to Stripe portal for transparent confirmation
+    // Not subscribed → start a fresh checkout
+    const endpoint = isPaid ? "/api/stripe/upgrade-portal" : "/api/stripe/checkout";
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ plan: "DEEP_ROOTS" }),
     });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
-    else if (data.upgraded) window.location.href = "/dashboard?welcomed=1";
     else setLoading(false);
   }
 
@@ -142,42 +143,18 @@ function DiscoverUpsell({ isPaid }: { isPaid: boolean }) {
         ))}
       </div>
 
-      {isPaid && confirming ? (
-        <div className="rounded-2xl border border-[var(--color-harvest-200)] bg-[var(--color-harvest-50)] p-6 text-left mb-4">
-          <p className="font-semibold text-[var(--foreground)] mb-1">Confirm upgrade to Deep Roots</p>
-          <p className="text-sm text-[var(--text-muted)] mb-4">
-            You&apos;ll be upgraded from Seedling to Deep Roots ($9.99/mo). A prorated charge for the remainder of your billing period will be applied immediately.
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={upgrade}
-              disabled={loading}
-              className="flex-1 py-2.5 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold text-sm hover:bg-[var(--color-harvest-600)] transition-colors disabled:opacity-50"
-            >
-              {loading ? "Upgrading…" : "Yes, upgrade now"}
-            </button>
-            <button
-              onClick={() => setConfirming(false)}
-              className="px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <>
-          <button
-            onClick={() => isPaid ? setConfirming(true) : upgrade()}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold hover:bg-[var(--color-harvest-400)] transition-colors disabled:opacity-50"
-          >
-            {loading ? "Loading…" : "Upgrade to Deep Roots — $9.99/mo"}
-          </button>
-          <p className="text-xs text-[var(--text-muted)] mt-3">
-            {isPaid ? "Upgrade from Seedling — prorated charge applies." : "7-day free trial — no charge until trial ends."}
-          </p>
-        </>
-      )}
+      <button
+        onClick={upgrade}
+        disabled={loading}
+        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold hover:bg-[var(--color-harvest-400)] transition-colors disabled:opacity-50"
+      >
+        {loading ? "Loading…" : "Upgrade to Deep Roots — $9.99/mo"}
+      </button>
+      <p className="text-xs text-[var(--text-muted)] mt-3">
+        {isPaid
+          ? "You'll see the exact charge (or $0 if you're on a free trial) on the next screen before confirming."
+          : "7-day free trial — no charge until trial ends."}
+      </p>
     </div>
   );
 }
@@ -432,20 +409,7 @@ function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, like
 {/* Settings accessible via header icon */}
       </div>
 
-      {/* Upgrade CTA for free users */}
-      {!isPaid && (
-        <div className="mb-8 rounded-2xl border-2 border-dashed border-[var(--color-sage-300)] bg-[var(--color-sage-50)] p-6 flex flex-col sm:flex-row items-center gap-5">
-          <div className="flex-1">
-            <p className="font-semibold text-[var(--foreground)] mb-1">🌱 Unlock your personal reading profile</p>
-            <p className="text-sm text-[var(--text-muted)]">
-              Get articles picked for you, save posts, track your history, and more. 7-day free trial.
-            </p>
-          </div>
-          <Link href="/pricing" className="shrink-0 px-5 py-2.5 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold text-sm hover:bg-[var(--color-harvest-600)] transition-colors">
-            Try free for 7 days
-          </Link>
-        </div>
-      )}
+{/* Upgrade CTA removed — OnboardingCard handles first-visit messaging */}
 
       {/* ── AI Search bar — Deep Roots only ── */}
       {isDeepRoots && (

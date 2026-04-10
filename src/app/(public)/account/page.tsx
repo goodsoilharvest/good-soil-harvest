@@ -20,6 +20,7 @@ export default async function AccountPage() {
       plan={sub?.plan ?? null}
       status={sub?.status ?? "FREE"}
       currentPeriodEnd={sub?.currentPeriodEnd?.toISOString() ?? null}
+      trialEnd={sub?.trialEnd?.toISOString() ?? null}
     />
   );
 }

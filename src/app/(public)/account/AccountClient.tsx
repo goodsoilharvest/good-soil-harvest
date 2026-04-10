@@ -12,7 +12,15 @@ type Props = {
   plan: "SEEDLING" | "DEEP_ROOTS" | null;
   status: string;
   currentPeriodEnd: string | null;
+  trialEnd: string | null;
 };
+
+function trialDaysLeft(trialEnd: string | null): number | null {
+  if (!trialEnd) return null;
+  const ms = new Date(trialEnd).getTime() - Date.now();
+  if (ms <= 0) return null;
+  return Math.ceil(ms / (1000 * 60 * 60 * 24));
+}
 
 const planInfo = {
   SEEDLING: {
@@ -140,7 +148,7 @@ function AccountDropdown() {
   );
 }
 
-function AccountContent({ userId, email, memberSince, plan, status, currentPeriodEnd }: Props) {
+function AccountContent({ userId, email, memberSince, plan, status, currentPeriodEnd, trialEnd }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const upgraded = searchParams.get("upgraded") === "1";
@@ -153,6 +161,8 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
 
   const isActive = status === "ACTIVE";
   const info = plan ? planInfo[plan] : null;
+  const daysLeft = trialDaysLeft(trialEnd);
+  const onTrial = daysLeft !== null && daysLeft > 0;
 
   useEffect(() => {
     if (!checkout) return;
@@ -212,14 +222,16 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
   }
 
   async function upgradeToDeepRoots() {
-    const res = await fetch("/api/stripe/checkout", {
+    // Existing subscriber → Stripe portal with proration preview
+    // No subscription → fresh checkout
+    const endpoint = isActive ? "/api/stripe/upgrade-portal" : "/api/stripe/checkout";
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ plan: "DEEP_ROOTS" }),
     });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
-    else if (data.upgraded) window.location.href = "/dashboard?welcomed=1";
   }
 
   if (checkout || syncOnReturn) {
@@ -292,9 +304,20 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
                 Active
               </span>
             </div>
+            {onTrial && (
+              <div className="rounded-xl bg-[var(--color-harvest-50)] border border-[var(--color-harvest-200)] px-4 py-3">
+                <p className="text-sm font-semibold text-[var(--color-harvest-800)] mb-0.5">
+                  ⏰ Free trial — {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
+                </p>
+                <p className="text-xs text-[var(--color-harvest-700)]">
+                  No charge until {trialEnd ? new Date(trialEnd).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "your trial ends"}.
+                  After that, ${info?.price ?? "9.99"}/month will be charged automatically. You can cancel any time before then to avoid the charge.
+                </p>
+              </div>
+            )}
             {currentPeriodEnd && (
               <p className="text-xs text-[var(--text-muted)]">
-                Renews {new Date(currentPeriodEnd).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                {onTrial ? "First charge" : "Renews"} {new Date(currentPeriodEnd).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </p>
             )}
             <button

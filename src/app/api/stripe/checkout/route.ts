@@ -31,33 +31,16 @@ export async function POST(req: NextRequest) {
 
     const existingSub = await prisma.subscription.findUnique({ where: { userId: session.user.id! } });
 
-    // ── Already has an active subscription → update price in-place ──────────
+    // ── Already has an active subscription? Tell client to use the portal flow ──
+    // (Plan changes need Stripe's confirmation UI for transparency around proration.)
     if (
       existingSub?.stripeSubscriptionId &&
       (existingSub.status === "ACTIVE" || existingSub.status === "PAST_DUE")
     ) {
-      const stripeSub = await stripe.subscriptions.retrieve(existingSub.stripeSubscriptionId);
-      const itemId = stripeSub.items.data[0]?.id;
-
-      if (itemId) {
-        const updated = await stripe.subscriptions.update(existingSub.stripeSubscriptionId, {
-          items: [{ id: itemId, price: priceId }],
-          proration_behavior: "always_invoice",
-          metadata: { userId: session.user.id!, plan },
-        });
-
-        const trialEnd = updated.trial_end ? new Date(updated.trial_end * 1000) : null;
-        const item = updated.items.data[0] as { current_period_end?: number } | undefined;
-        const periodEnd = item?.current_period_end ? new Date(item.current_period_end * 1000) : null;
-
-        await prisma.subscription.update({
-          where: { userId: session.user.id! },
-          data: { plan, trialEnd, currentPeriodEnd: periodEnd },
-        });
-
-        // Return a special flag so the client knows no redirect is needed
-        return NextResponse.json({ upgraded: true, plan });
-      }
+      return NextResponse.json(
+        { error: "use_portal", message: "Use /api/stripe/upgrade-portal for plan changes" },
+        { status: 409 }
+      );
     }
 
     // ── No existing subscription → create Checkout session (first time) ─────

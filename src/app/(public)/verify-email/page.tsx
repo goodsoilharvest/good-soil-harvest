@@ -34,14 +34,18 @@ function VerifyEmailContent() {
   }
 
   function handlePaste(e: React.ClipboardEvent) {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (pasted.length === 6) {
-      const next = pasted.split("");
-      setDigits(next);
-      inputs.current[5]?.focus();
-      submitCode(pasted);
-    }
     e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    const next = ["", "", "", "", "", ""];
+    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
+    setDigits(next);
+    setError("");
+    // Focus next empty box, or last box if all filled
+    const lastFilled = pasted.length - 1;
+    const focusIndex = lastFilled >= 5 ? 5 : lastFilled + 1;
+    inputs.current[focusIndex]?.focus();
+    if (pasted.length === 6) submitCode(pasted);
   }
 
   async function submitCode(code: string) {
@@ -124,17 +128,19 @@ function VerifyEmailContent() {
 
         <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-8">
           {/* 6-digit input */}
-          <div className="flex gap-2 justify-center mb-6" onPaste={handlePaste}>
+          <div className="flex gap-2 justify-center mb-6">
             {digits.map((d, i) => (
               <input
                 key={i}
                 ref={el => { inputs.current[i] = el; }}
                 type="text"
                 inputMode="numeric"
+                autoComplete="one-time-code"
                 maxLength={1}
                 value={d}
                 onChange={e => handleDigit(i, e.target.value)}
                 onKeyDown={e => handleKeyDown(i, e)}
+                onPaste={handlePaste}
                 disabled={loading}
                 autoFocus={i === 0}
                 className={`w-11 h-14 text-center text-2xl font-bold rounded-xl border-2 bg-[var(--surface)] text-[var(--foreground)] focus:outline-none transition-colors disabled:opacity-50
