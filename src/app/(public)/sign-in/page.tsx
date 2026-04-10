@@ -9,8 +9,10 @@ function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan") ?? null;
+  const existing = searchParams.get("existing") === "1";
+  const initialEmail = searchParams.get("email") ?? "";
 
-  const [email, setEmail]       = useState("");
+  const [email, setEmail]       = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
@@ -20,7 +22,8 @@ function SignInForm() {
     setLoading(true);
     setError("");
 
-    const result = await signIn("credentials", { email, password, redirect: false });
+    const normalizedEmail = email.trim().toLowerCase();
+    const result = await signIn("credentials", { email: normalizedEmail, password, redirect: false });
 
     if (result?.error) {
       setError("Invalid email or password.");
@@ -59,7 +62,9 @@ function SignInForm() {
             Welcome back
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
-            {plan
+            {existing
+              ? "An account with that email already exists. Sign in below to continue."
+              : plan
               ? "Sign in to continue to payment."
               : "Sign in to access your Good Soil membership."}
           </p>
@@ -106,6 +111,15 @@ function SignInForm() {
               {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
+
+          <div className="mt-4 text-center">
+            <Link
+              href="/forgot-password"
+              className="text-xs text-[var(--text-muted)] hover:text-[var(--color-sage-600)] hover:underline transition-colors"
+            >
+              Forgot your password?
+            </Link>
+          </div>
         </div>
 
         <p className="text-center text-sm text-[var(--text-muted)] mt-6">

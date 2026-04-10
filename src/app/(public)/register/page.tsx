@@ -65,7 +65,13 @@ function RegisterForm() {
 
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? "Something went wrong.");
+      // Email already exists — bounce them to sign-in with a friendly message
+      if (data.error === "account_exists") {
+        const signInUrl = plan ? `/sign-in?plan=${plan}&existing=1` : "/sign-in?existing=1";
+        router.push(`${signInUrl}&email=${encodeURIComponent(email)}`);
+        return;
+      }
+      setError(data.message ?? data.error ?? "Something went wrong.");
       setLoading(false);
       return;
     }

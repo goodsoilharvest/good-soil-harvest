@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { signOut } from "@/auth";
+import { AdminNavClient } from "./AdminNavClient";
 
 export default async function AdminLayout({
   children,
@@ -14,54 +14,14 @@ export default async function AdminLayout({
     redirect("/admin-login");
   }
 
+  async function handleSignOut() {
+    "use server";
+    await signOut({ redirectTo: "/admin-login" });
+  }
+
   return (
     <div className="min-h-screen bg-[var(--color-soil-900)]">
-      {/* Admin nav */}
-      <header className="bg-[var(--color-soil-800)] text-white border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/admin" className="font-serif font-bold text-[var(--color-harvest-400)]">
-              🌱 Good Soil CMS
-            </Link>
-            <nav className="hidden sm:flex items-center gap-1 text-sm">
-              <Link href="/admin" className="px-3 py-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-                Dashboard
-              </Link>
-              <Link href="/admin/drafts" className="px-3 py-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-                Drafts
-              </Link>
-              <Link href="/admin/posts" className="px-3 py-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-                Posts
-              </Link>
-              <Link href="/admin/feedback" className="px-3 py-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-                Feedback
-              </Link>
-              <Link href="/admin/settings" className="px-3 py-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-                Settings
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="text-sm text-[var(--color-sage-300)] hover:text-white transition-colors"
-            >
-              ← My Feed
-            </Link>
-            <form
-              action={async () => {
-                "use server";
-                await signOut({ redirectTo: "/admin-login" });
-              }}
-            >
-              <button type="submit" className="text-sm text-white/60 hover:text-white transition-colors">
-                Sign out
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
-
+      <AdminNavClient signOutAction={handleSignOut} />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 text-white">
         {children}
       </main>

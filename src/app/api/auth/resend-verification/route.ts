@@ -7,9 +7,11 @@ function generateCode() {
 }
 
 export async function POST(req: NextRequest) {
-  const { email } = await req.json();
-  if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
+  const body = await req.json();
+  const rawEmail = body.email as string | undefined;
+  if (!rawEmail) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
+  const email = rawEmail.trim().toLowerCase();
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || user.emailVerified) {
     return NextResponse.json({ ok: true }); // Don't reveal whether account exists

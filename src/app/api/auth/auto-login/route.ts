@@ -5,14 +5,16 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const token = searchParams.get("token");
-  const email = searchParams.get("email");
+  const rawEmail = searchParams.get("email");
   const plan  = searchParams.get("plan");
 
   const siteUrl = process.env.NEXTAUTH_URL ?? "https://goodsoilharvest.com";
 
-  if (!token || !email) {
+  if (!token || !rawEmail) {
     return NextResponse.redirect(new URL("/sign-in", siteUrl));
   }
+
+  const email = rawEmail.trim().toLowerCase();
 
   // Quick pre-check — if token is already gone or expired, bail early
   const user = await prisma.user.findUnique({ where: { email } });

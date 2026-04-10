@@ -4,12 +4,15 @@ import { sendWelcomeEmail } from "@/lib/email";
 import { randomUUID } from "crypto";
 
 export async function POST(req: NextRequest) {
-  const { email, code } = await req.json();
+  const body = await req.json();
+  const code = body.code as string | undefined;
+  const rawEmail = body.email as string | undefined;
 
-  if (!email || !code) {
+  if (!rawEmail || !code) {
     return NextResponse.json({ error: "Email and code are required" }, { status: 400 });
   }
 
+  const email = rawEmail.trim().toLowerCase();
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {

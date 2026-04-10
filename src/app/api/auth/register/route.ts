@@ -4,15 +4,19 @@ import { sendVerificationEmail } from "@/lib/email";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json();
+  const body = await req.json();
+  const rawEmail = body.email as string | undefined;
+  const password = body.password as string | undefined;
 
-  if (!email || !password) {
+  if (!rawEmail || !password) {
     return NextResponse.json({ error: "Email and password required" }, { status: 400 });
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
     return NextResponse.json({ error: "Enter a valid email address" }, { status: 400 });
   }
+
+  const email = rawEmail.trim().toLowerCase();
 
   const pwErrors = [];
   if (password.length < 8)             pwErrors.push("at least 8 characters");
@@ -28,7 +32,11 @@ export async function POST(req: NextRequest) {
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    return NextResponse.json({ error: "An account with that email already exists" }, { status: 409 });
+    // Tell the client to redirect them to sign-in (or password reset) instead
+    return NextResponse.json(
+      { error: "account_exists", message: "An account with that email already exists. Sign in instead." },
+      { status: 409 }
+    );
   }
 
   const passwordHash = await bcrypt.hash(password, 12);

@@ -87,6 +87,44 @@ export async function sendContactEmail({
   });
 }
 
+// ─── Password reset email ────────────────────────────────────────────────────
+
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const resetUrl = `${SITE}/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
+  return resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: "Reset your Good Soil Harvest password",
+    html: `
+      <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;padding:40px 24px;color:#2e1a0a;">
+        <div style="text-align:center;margin-bottom:32px;">
+          <span style="font-size:48px;">🌱</span>
+          <h1 style="font-size:26px;font-weight:bold;margin:12px 0 4px;">Reset your password</h1>
+        </div>
+
+        <p style="font-size:15px;line-height:1.6;margin-bottom:24px;">
+          Someone (hopefully you) requested a password reset for your Good Soil Harvest account.
+          Click the button below to set a new password. This link expires in 30 minutes.
+        </p>
+
+        <div style="text-align:center;margin-bottom:32px;">
+          <a href="${resetUrl}" style="display:inline-block;background:#637f52;color:#fff;font-size:15px;font-weight:600;padding:14px 32px;border-radius:10px;text-decoration:none;">
+            Reset password
+          </a>
+        </div>
+
+        <p style="font-size:13px;color:#6b4423;line-height:1.6;margin-bottom:16px;text-align:center;">
+          Or copy this link: <br/><span style="font-family:monospace;color:#9a7a5a;">${resetUrl}</span>
+        </p>
+
+        <p style="font-size:12px;color:#9a7a5a;text-align:center;margin-top:24px;">
+          If you didn't request this, you can safely ignore this email — your password won't change.
+        </p>
+      </div>
+    `,
+  });
+}
+
 // ─── Welcome email (post-verification) ───────────────────────────────────────
 
 export async function sendWelcomeEmail(email: string) {
