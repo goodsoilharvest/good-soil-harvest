@@ -76,6 +76,11 @@ export async function POST(req: NextRequest) {
       process.env.NEXTAUTH_URL ??
       "https://goodsoilharvest.com";
 
+    // Check if this email has already used a free trial (even if the prior account was deleted)
+    const emailLower = session.user.email.toLowerCase();
+    const priorClaim = await prisma.trialClaim.findUnique({ where: { email: emailLower } });
+    const grantTrial = !priorClaim;
+
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
@@ -83,12 +88,22 @@ export async function POST(req: NextRequest) {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/dashboard?upgraded=1`,
       cancel_url: `${origin}/pricing`,
-      metadata: { userId: session.user.id!, plan },
+      metadata: { userId: session.user.id!, plan, trialGranted: grantTrial ? "1" : "0" },
       subscription_data: {
-        trial_period_days: 7,
+        ...(grantTrial ? { trial_period_days: 7 } : {}),
         metadata: { userId: session.user.id!, plan },
       },
     });
+
+    // Record the claim now so even if they cancel checkout halfway, repeated attempts don't get
+    // trial-granted infinitely. The webhook will mark it on actual subscription creation too.
+    if (grantTrial) {
+      try {
+        await prisma.trialClaim.create({ data: { email: emailLower } });
+      } catch {
+        // race — already exists, fine
+      }
+    }
 
     return NextResponse.json({ url: checkoutSession.url });
   } catch (err) {

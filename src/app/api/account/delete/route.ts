@@ -10,6 +10,7 @@ export async function DELETE() {
   }
 
   const userId = session.user.id;
+  const userEmail = session.user.email?.toLowerCase() ?? null;
 
   // Cancel any active Stripe subscription AND delete the customer record before deleting the user
   const subscription = await prisma.subscription.findUnique({ where: { userId } });
@@ -28,6 +29,20 @@ export async function DELETE() {
       await stripe.customers.del(subscription.stripeCustomerId);
     } catch {
       // May already be deleted — continue
+    }
+  }
+
+  // Record the email so this user cannot claim another free trial after deleting + re-signing up.
+  // Survives the user record deletion below since TrialClaim is unrelated to User.
+  if (userEmail) {
+    try {
+      await prisma.trialClaim.upsert({
+        where: { email: userEmail },
+        create: { email: userEmail },
+        update: {}, // already recorded — no-op
+      });
+    } catch {
+      // non-fatal — continue with deletion
     }
   }
 

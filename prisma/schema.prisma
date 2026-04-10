@@ -23,6 +23,7 @@ model User {
   postLikes       PostLike[]
   postViews       PostView[]
   aiSearchLogs    AiSearchLog[]
+  feedback        Feedback[]
 }
 
 model Session {
@@ -153,6 +154,59 @@ enum DraftStatus {
   APPROVED   // moved to Post table as APPROVED
   REJECTED
   EDITED     // approved with modifications
+}
+
+// ─── User Feedback ───────────────────────────────────────────────────────────
+
+model Feedback {
+  id          String          @id @default(cuid())
+  userId      String?         // null if submitted while logged out (rare)
+  email       String?         // captured at submission for context
+  message     String          // raw user message
+  type        FeedbackType    @default(COMMENT)
+  status      FeedbackStatus  @default(NEW)
+  // AI-generated triage data — populated on-demand when admin opens the feedback page
+  aiSummary   String?         // one-sentence summary
+  aiPriority  FeedbackPriority?
+  aiTags      String?         // comma-separated tags like "bug,blocking,paywall"
+  aiTriagedAt DateTime?
+  // User context
+  userAgent   String?
+  pageUrl     String?         // where they were when they submitted
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+enum FeedbackType {
+  BUG
+  FEATURE
+  COMMENT
+  QUESTION
+}
+
+enum FeedbackStatus {
+  NEW
+  TRIAGED
+  IN_PROGRESS
+  RESOLVED
+  DISMISSED
+}
+
+enum FeedbackPriority {
+  CRITICAL  // bug blocking users, payment issues
+  HIGH      // requested by many, important fix
+  MEDIUM    // useful improvement
+  LOW       // nice-to-have, minor
+}
+
+// ─── Trial Abuse Prevention ──────────────────────────────────────────────────
+// Records emails that have already used a free trial. Survives account
+// deletion so users cannot delete + re-signup to get unlimited trials.
+model TrialClaim {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  claimedAt  DateTime @default(now())
 }
 
 // ─── AI Usage Logging ────────────────────────────────────────────────────────

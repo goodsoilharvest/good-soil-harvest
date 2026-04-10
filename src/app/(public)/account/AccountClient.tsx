@@ -49,8 +49,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function AccountDropdown({ isAdmin = false }: { isAdmin?: boolean }) {
+function AccountDropdown({ isAdmin = false, isPaid = false }: { isAdmin?: boolean; isPaid?: boolean }) {
   const [open, setOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -59,7 +60,6 @@ function AccountDropdown({ isAdmin = false }: { isAdmin?: boolean }) {
     function handle(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
-        setDeleteConfirm(false);
       }
     }
     document.addEventListener("mousedown", handle);
@@ -77,7 +77,14 @@ function AccountDropdown({ isAdmin = false }: { isAdmin?: boolean }) {
       alert(data.error || "Failed to delete account. Please try again.");
       setDeleting(false);
       setDeleteConfirm(false);
+      setShowDeleteModal(false);
     }
+  }
+
+  function openDeleteModal() {
+    setOpen(false);
+    setDeleteConfirm(false);
+    setShowDeleteModal(true);
   }
 
   return (
@@ -162,14 +169,83 @@ function AccountDropdown({ isAdmin = false }: { isAdmin?: boolean }) {
             <>
               <div className="border-t border-[var(--border)] my-1" />
               <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors w-full text-left disabled:opacity-50"
+                onClick={openDeleteModal}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors w-full text-left"
               >
-                {deleting ? "Deleting…" : deleteConfirm ? "⚠ Click again to confirm permanent deletion" : "🗑 Delete account"}
+                🗑 Delete account
               </button>
             </>
           )}
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {showDeleteModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          onClick={() => !deleting && setShowDeleteModal(false)}
+        >
+          <div
+            className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-2xl w-full max-w-md p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-3xl">⚠️</span>
+              <h2 className="font-serif text-xl font-bold text-[var(--foreground)]">Delete your account?</h2>
+            </div>
+            <p className="text-sm text-[var(--text-muted)] mb-4">
+              This is permanent. Here&apos;s exactly what will happen when you confirm:
+            </p>
+            <ul className="space-y-2 text-sm mb-4">
+              {isPaid && (
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 shrink-0 mt-0.5">✓</span>
+                  <span className="text-[var(--foreground)]">Your active subscription will be <strong>canceled immediately</strong> on Stripe — no further charges.</span>
+                </li>
+              )}
+              <li className="flex items-start gap-2">
+                <span className="text-green-600 shrink-0 mt-0.5">✓</span>
+                <span className="text-[var(--foreground)]">Your customer record will be <strong>removed from Stripe</strong> entirely.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-600 shrink-0 mt-0.5">✓</span>
+                <span className="text-[var(--foreground)]">Your reading history, saved posts, and likes will be <strong>permanently deleted</strong> from our database.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-600 shrink-0 mt-0.5">✓</span>
+                <span className="text-[var(--foreground)]">Your account, profile, and login credentials will be <strong>removed</strong>.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-amber-600 shrink-0 mt-0.5">!</span>
+                <span className="text-[var(--text-muted)]">Your email is kept in a small fraud-prevention log so the same address cannot claim another free trial.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-red-600 shrink-0 mt-0.5">✗</span>
+                <span className="text-[var(--text-muted)]"><strong>This cannot be undone.</strong> You can sign back up later, but your reading history and any active billing period are gone.</span>
+              </li>
+            </ul>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-lg border border-[var(--border)] text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {deleting
+                  ? "Deleting…"
+                  : deleteConfirm
+                  ? "⚠ Click again to confirm"
+                  : "Delete my account"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -465,7 +541,7 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
 
       {/* Account dropdown */}
       <Section title="More">
-        <AccountDropdown isAdmin={isAdmin} />
+        <AccountDropdown isAdmin={isAdmin} isPaid={isActive} />
       </Section>
 
     </div>
