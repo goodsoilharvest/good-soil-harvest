@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useRef } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -9,75 +9,66 @@ function VerifyEmailContent() {
   const email = searchParams.get("email") ?? "";
   const plan  = searchParams.get("plan")  ?? "";
 
-  const [digits, setDigits] = useState(["", "", "", "", "", ""]);
+  const [code, setCode] = useState("");
   const [error, setError]   = useState("");
   const [loading, setLoading] = useState(false);
   const [verified, setVerified] = useState(false);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
-  const inputs = useRef<(HTMLInputElement | null)[]>([]);
+  const [debug, setDebug] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  function handleDigit(i: number, val: string) {
-    const char = val.replace(/\D/g, "").slice(-1);
-    const next = [...digits];
-    next[i] = char;
-    setDigits(next);
+  function dbg(msg: string) {
+    const t = new Date().toISOString().slice(11, 19);
+    setDebug(prev => [...prev.slice(-9), `[${t}] ${msg}`]);
+  }
+
+  useEffect(() => {
+    inputRef.current?.focus();
+    dbg(`mounted ua=${navigator.userAgent.slice(0, 40)}`);
+  }, []);
+
+  function handleChange(val: string) {
+    const cleaned = val.replace(/\D/g, "").slice(0, 6);
+    dbg(`change "${val.slice(0, 12)}" → "${cleaned}"`);
+    setCode(cleaned);
     setError("");
-    if (char && i < 5) inputs.current[i + 1]?.focus();
-    if (next.every(d => d !== "")) submitCode(next.join(""));
+    if (cleaned.length === 6) submitCode(cleaned);
   }
 
-  function handleKeyDown(i: number, e: React.KeyboardEvent) {
-    if (e.key === "Backspace" && !digits[i] && i > 0) {
-      inputs.current[i - 1]?.focus();
-    }
+  function handlePaste(e: React.ClipboardEvent<HTMLInputElement>) {
+    const raw = e.clipboardData.getData("text") || "";
+    dbg(`paste raw="${raw.slice(0, 20)}"`);
+    // Don't preventDefault — let the native handler set value, then onChange catches it
   }
 
-  function handlePaste(e: React.ClipboardEvent) {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (!pasted) return;
-    const next = ["", "", "", "", "", ""];
-    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
-    setDigits(next);
-    setError("");
-    // Focus next empty box, or last box if all filled
-    const lastFilled = pasted.length - 1;
-    const focusIndex = lastFilled >= 5 ? 5 : lastFilled + 1;
-    inputs.current[focusIndex]?.focus();
-    if (pasted.length === 6) submitCode(pasted);
-  }
-
-  async function submitCode(code: string) {
-    if (code.length !== 6) return;
+  async function submitCode(c: string) {
+    if (c.length !== 6) return;
     setLoading(true);
     setError("");
+    dbg(`submit ${c}`);
 
     const res = await fetch("/api/auth/verify-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, code }),
+      body: JSON.stringify({ email, code: c }),
     });
 
     const data = await res.json();
 
     if (res.ok) {
       setVerified(true);
-
-      // Build auto-login URL — server-side route signs user in and redirects
-      // to /account?checkout=PLAN (which auto-fires Stripe) or just /account
       const loginToken = data.loginToken as string | undefined;
       const params = new URLSearchParams({ email });
       if (loginToken) params.set("token", loginToken);
       if (plan) params.set("plan", plan);
-
       setTimeout(() => {
         window.location.href = `/api/auth/auto-login?${params}`;
       }, 1200);
     } else {
       setError(data.error ?? "Incorrect code. Please try again.");
-      setDigits(["", "", "", "", "", ""]);
-      inputs.current[0]?.focus();
+      setCode("");
+      inputRef.current?.focus();
       setLoading(false);
     }
   }
@@ -92,8 +83,8 @@ function VerifyEmailContent() {
     });
     setResent(true);
     setResending(false);
-    setDigits(["", "", "", "", "", ""]);
-    setTimeout(() => inputs.current[0]?.focus(), 100);
+    setCode("");
+    setTimeout(() => inputRef.current?.focus(), 100);
     setTimeout(() => setResent(false), 5000);
   }
 
@@ -111,6 +102,10 @@ function VerifyEmailContent() {
     );
   }
 
+  // Build the 6 visual slots from the current code string
+  const slots = Array.from({ length: 6 }, (_, i) => code[i] ?? "");
+  const focusedIndex = code.length < 6 ? code.length : 5;
+
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm">
@@ -127,31 +122,51 @@ function VerifyEmailContent() {
         </div>
 
         <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-8">
-          {/* 6-digit input */}
-          <div className="flex gap-2 justify-center mb-6">
-            {digits.map((d, i) => (
-              <input
-                key={i}
-                ref={el => { inputs.current[i] = el; }}
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={1}
-                value={d}
-                onChange={e => handleDigit(i, e.target.value)}
-                onKeyDown={e => handleKeyDown(i, e)}
-                onPaste={handlePaste}
-                disabled={loading}
-                autoFocus={i === 0}
-                className={`w-11 h-14 text-center text-2xl font-bold rounded-xl border-2 bg-[var(--surface)] text-[var(--foreground)] focus:outline-none transition-colors disabled:opacity-50
-                  ${error
-                    ? "border-red-400 focus:border-red-400"
-                    : d
-                      ? "border-[var(--color-sage-400)]"
-                      : "border-[var(--border)] focus:border-[var(--color-sage-400)]"
-                  }`}
-              />
-            ))}
+          {/* Single hidden input behind 6 visual boxes — only reliable cross-browser approach */}
+          <div
+            className="relative mb-6"
+            onClick={() => inputRef.current?.focus()}
+          >
+            {/* Visual slots */}
+            <div className="flex gap-2 justify-center pointer-events-none">
+              {slots.map((digit, i) => {
+                const isFocused = i === focusedIndex && document.activeElement === inputRef.current;
+                return (
+                  <div
+                    key={i}
+                    className={`w-11 h-14 flex items-center justify-center text-2xl font-bold rounded-xl border-2 bg-[var(--surface)] text-[var(--foreground)] transition-colors
+                      ${error
+                        ? "border-red-400"
+                        : digit
+                          ? "border-[var(--color-sage-400)]"
+                          : isFocused
+                            ? "border-[var(--color-sage-400)]"
+                            : "border-[var(--border)]"
+                      }`}
+                  >
+                    {digit}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Real input — invisible but receives all events */}
+            <input
+              ref={inputRef}
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]*"
+              maxLength={6}
+              value={code}
+              onChange={e => handleChange(e.target.value)}
+              onPaste={handlePaste}
+              disabled={loading}
+              autoFocus
+              aria-label="Verification code"
+              className="absolute inset-0 w-full h-full opacity-0 text-center cursor-text disabled:opacity-0"
+              style={{ caretColor: "transparent" }}
+            />
           </div>
 
           {error && (
@@ -188,6 +203,14 @@ function VerifyEmailContent() {
             </Link>
           </p>
         </div>
+
+        {/* DEBUG PANEL — remove after iOS verified */}
+        {debug.length > 0 && (
+          <div className="mt-4 p-3 bg-black/80 text-white text-xs font-mono rounded-lg max-h-40 overflow-y-auto">
+            <div className="opacity-50 mb-1">debug events:</div>
+            {debug.map((d, i) => <div key={i}>{d}</div>)}
+          </div>
+        )}
       </div>
     </div>
   );
