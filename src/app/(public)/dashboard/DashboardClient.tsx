@@ -429,9 +429,7 @@ function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, like
               : `${totalPosts} articles — upgrade for personalized suggestions`}
           </p>
         </div>
-        <Link href="/account" className="text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1">
-          ⚙ Account settings
-        </Link>
+{/* Settings accessible via header icon */}
       </div>
 
       {/* Upgrade CTA for free users */}

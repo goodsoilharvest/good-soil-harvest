@@ -42,28 +42,47 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function AccountDropdown() {
   const [open, setOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handle(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setDeleteConfirm(false);
+      }
     }
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
   }, []);
 
+  async function handleDelete() {
+    if (!deleteConfirm) { setDeleteConfirm(true); return; }
+    setDeleting(true);
+    const res = await fetch("/api/account/delete", { method: "DELETE" });
+    if (res.ok) {
+      await signOut({ callbackUrl: "/?deleted=1" });
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || "Failed to delete account. Please try again.");
+      setDeleting(false);
+      setDeleteConfirm(false);
+    }
+  }
+
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
+        className="w-full flex items-center justify-between gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
       >
         <span>⚙ Account</span>
         <span className={`text-xs transition-transform ${open ? "rotate-180" : ""}`}>▾</span>
       </button>
 
       {open && (
-        <div className="absolute left-0 mt-2 w-52 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg py-1 z-10">
+        <div className="absolute left-0 right-0 mt-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg py-1 z-10">
           <Link
             href="/account/change-password"
             onClick={() => setOpen(false)}
@@ -106,6 +125,14 @@ function AccountDropdown() {
             className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left"
           >
             ↩ Sign out
+          </button>
+          <div className="border-t border-[var(--border)] my-1" />
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors w-full text-left disabled:opacity-50"
+          >
+            {deleting ? "Deleting…" : deleteConfirm ? "⚠ Click again to confirm permanent deletion" : "🗑 Delete account"}
           </button>
         </div>
       )}
