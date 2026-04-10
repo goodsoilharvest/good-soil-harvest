@@ -258,6 +258,7 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
   const upgraded = searchParams.get("upgraded") === "1";
   const checkout = searchParams.get("checkout");
   const syncOnReturn = searchParams.get("sync") === "1";
+  const autoUpgrade = searchParams.get("upgrade"); // "deep_roots" → fire portal
 
   const [portalLoading, setPortalLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -281,6 +282,29 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
         else router.replace("/pricing");
       })
       .catch(() => router.replace("/pricing"));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-fire upgrade portal when ?upgrade=deep_roots (from blog paywall click)
+  useEffect(() => {
+    if (autoUpgrade !== "deep_roots" || !isActive) return;
+    fetch("/api/stripe/upgrade-portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: "DEEP_ROOTS" }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.url) {
+          window.location.href = data.url;
+        } else if (data.upgraded) {
+          router.replace("/account?sync=1");
+          router.refresh();
+        } else {
+          router.replace("/account");
+        }
+      })
+      .catch(() => router.replace("/account"));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -326,7 +350,7 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
   }
 
   async function upgradeToDeepRoots() {
-    // Existing subscriber → Stripe portal with proration preview
+    // Existing subscriber → upgrade-portal (handles trial vs proration internally)
     // No subscription → fresh checkout
     const endpoint = isActive ? "/api/stripe/upgrade-portal" : "/api/stripe/checkout";
     const res = await fetch(endpoint, {
@@ -335,7 +359,13 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
       body: JSON.stringify({ plan: "DEEP_ROOTS" }),
     });
     const data = await res.json();
-    if (data.url) window.location.href = data.url;
+    if (data.url) {
+      window.location.href = data.url;
+    } else if (data.upgraded) {
+      // Trial-preserving upgrade succeeded
+      router.replace("/account?sync=1");
+      router.refresh();
+    }
   }
 
   if (checkout || syncOnReturn) {

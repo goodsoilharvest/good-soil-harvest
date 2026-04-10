@@ -120,10 +120,10 @@ export function FeedbackWidget() {
                     <button
                       key={opt.v}
                       onClick={() => setType(opt.v)}
-                      className={`px-2 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      className={`px-2 py-1.5 rounded-lg text-xs font-semibold transition-colors border-2 ${
                         type === opt.v
-                          ? "bg-[var(--color-sage-100)] text-[var(--color-sage-800)] ring-1 ring-[var(--color-sage-400)]"
-                          : "bg-[var(--surface-muted)] text-[var(--text-muted)] hover:bg-[var(--surface-muted-hover)]"
+                          ? "border-[var(--color-sage-500)] text-[var(--color-sage-700)] bg-transparent"
+                          : "border-transparent bg-[var(--surface-muted)] text-[var(--text-muted)] hover:text-[var(--foreground)]"
                       }`}
                     >
                       {opt.label}

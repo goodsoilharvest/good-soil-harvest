@@ -68,23 +68,27 @@ export default async function PostPage({
   // isDeepRoots posts: requires DEEP_ROOTS active subscription
   let accessGranted = true;
   let isLiked = false;
+  let viewerPlan: "FREE" | "SEEDLING" | "DEEP_ROOTS" | "ADMIN" = "FREE";
   const session = await auth();
   const userId = session?.user?.id;
 
-  if (post.isPremium || post.isDeepRoots) {
-    // Admins always have full access
-    if (session?.user?.role === "ADMIN") {
-      accessGranted = true;
-    } else if (!userId) {
-      accessGranted = false;
-    } else {
-      const sub = await prisma.subscription.findUnique({ where: { userId } });
-      const isActive = sub?.status === "ACTIVE";
-      const isDeepRoots = sub?.plan === "DEEP_ROOTS";
-      const isSeedlingOrAbove = isActive && (sub?.plan === "SEEDLING" || isDeepRoots);
+  if (session?.user?.role === "ADMIN") {
+    viewerPlan = "ADMIN";
+  } else if (userId) {
+    const sub = await prisma.subscription.findUnique({ where: { userId } });
+    if (sub?.status === "ACTIVE") {
+      if (sub.plan === "DEEP_ROOTS") viewerPlan = "DEEP_ROOTS";
+      else if (sub.plan === "SEEDLING") viewerPlan = "SEEDLING";
+    }
+  }
 
-      if (post.isDeepRoots && !isDeepRoots) accessGranted = false;
-      else if (post.isPremium && !isSeedlingOrAbove) accessGranted = false;
+  if (post.isPremium || post.isDeepRoots) {
+    if (viewerPlan === "ADMIN" || viewerPlan === "DEEP_ROOTS") {
+      accessGranted = true;
+    } else if (post.isPremium && !post.isDeepRoots && viewerPlan === "SEEDLING") {
+      accessGranted = true;
+    } else {
+      accessGranted = false;
     }
   }
 
@@ -105,16 +109,27 @@ export default async function PostPage({
 
   return (
     <div className="max-w-[var(--max-w-prose)] mx-auto px-4 sm:px-6 py-14">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-8">
-        <Link href="/blog" className="hover:text-[var(--foreground)] transition-colors">
-          Blog
-        </Link>
-        <span className="opacity-40">›</span>
-        <Link href={`/niches/${post.niche}`} className="hover:text-[var(--foreground)] transition-colors">
-          {niche?.title ?? post.niche}
-        </Link>
-      </div>
+      {/* Back to feed (signed-in) or breadcrumb (signed-out) */}
+      {userId ? (
+        <div className="mb-8">
+          <Link
+            href="/dashboard"
+            className="text-sm text-[var(--text-muted)] hover:text-[var(--color-sage-600)] transition-colors inline-flex items-center gap-1"
+          >
+            ← Back to my feed
+          </Link>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-8">
+          <Link href="/blog" className="hover:text-[var(--foreground)] transition-colors">
+            Blog
+          </Link>
+          <span className="opacity-40">›</span>
+          <Link href={`/niches/${post.niche}`} className="hover:text-[var(--foreground)] transition-colors">
+            {niche?.title ?? post.niche}
+          </Link>
+        </div>
+      )}
 
       {/* Header */}
       <header className="mb-10">
@@ -211,21 +226,60 @@ export default async function PostPage({
           )}
 
           {userId && (
-            <div className="mt-10 pt-8 border-t border-[var(--border)] flex items-center gap-3">
+            <div className="mt-10 pt-8 border-t border-[var(--border)] flex items-center justify-between gap-3 flex-wrap">
               <LikeButton postId={post.id} initialLiked={isLiked} />
+              <Link
+                href="/dashboard"
+                className="text-sm text-[var(--text-muted)] hover:text-[var(--color-sage-600)] transition-colors inline-flex items-center gap-1"
+              >
+                ← Back to my feed
+              </Link>
             </div>
           )}
         </>
       ) : (
-        <Paywall isDeepRoots={post.isDeepRoots} />
+        <Paywall isDeepRoots={post.isDeepRoots} viewerPlan={viewerPlan} />
       )}
     </div>
   );
 }
 
-function Paywall({ isDeepRoots }: { isDeepRoots: boolean }) {
-  const requiredPlan = isDeepRoots ? "Deep Roots" : "Seedling";
-  const planHref = isDeepRoots ? "/pricing#deep-roots" : "/pricing#seedling";
+type ViewerPlan = "FREE" | "SEEDLING" | "DEEP_ROOTS" | "ADMIN";
+
+function Paywall({ isDeepRoots, viewerPlan }: { isDeepRoots: boolean; viewerPlan: ViewerPlan }) {
+  const isLoggedIn = viewerPlan !== "FREE" || false; // FREE viewerPlan can mean signed-out OR signed-in-no-sub
+  // ^ We can't distinguish from this prop alone. The render below handles each case explicitly.
+  const isSeedlingViewingDeepRoots = viewerPlan === "SEEDLING" && isDeepRoots;
+
+  // Distinct copy + CTAs for each scenario
+  let title: string;
+  let body: string;
+  let primaryHref: string;
+  let primaryLabel: string;
+  let showSignIn = false;
+
+  if (isSeedlingViewingDeepRoots) {
+    title = "🌾 Deep Roots Exclusive";
+    body =
+      "This article is part of Deep Roots — exclusive content twice a month, AI-powered search, and more. Upgrade from Seedling and you'll only pay the difference (or stay free if you're still on your trial).";
+    primaryHref = "/account?upgrade=deep_roots";
+    primaryLabel = "Upgrade to Deep Roots →";
+  } else if (viewerPlan === "SEEDLING" || viewerPlan === "DEEP_ROOTS") {
+    // Edge case — shouldn't normally hit (they have access). Show a generic billing link.
+    title = isDeepRoots ? "Deep Roots Exclusive" : "Premium Content";
+    body = "There's an issue with your subscription status. Please refresh, or visit your account.";
+    primaryHref = "/account";
+    primaryLabel = "Go to account →";
+  } else {
+    // Signed out OR signed in with no active subscription (FREE)
+    title = isDeepRoots ? "🌾 Deep Roots Exclusive" : "🌱 Premium Content";
+    body = isDeepRoots
+      ? "This article is for Deep Roots members. Start a 7-day free trial — exclusive posts, AI search, and full access to everything."
+      : "This article is for Seedling and Deep Roots members. Start a 7-day free trial to unlock all premium articles across every category.";
+    primaryHref = isDeepRoots ? "/pricing#deep-roots" : "/pricing#seedling";
+    primaryLabel = "Start free trial →";
+    showSignIn = true;
+  }
 
   return (
     <div className="text-center py-16 px-6">
@@ -240,33 +294,40 @@ function Paywall({ isDeepRoots }: { isDeepRoots: boolean }) {
       </div>
 
       <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[var(--color-harvest-100)] mb-5">
-        <span className="text-2xl">🌱</span>
+        <span className="text-2xl">{isDeepRoots ? "🌾" : "🌱"}</span>
       </div>
 
-      <h2 className="font-serif text-2xl font-bold text-[var(--foreground)] mb-3">
-        {isDeepRoots ? "Deep Roots Exclusive" : "Premium Content"}
-      </h2>
-      <p className="text-[var(--text-muted)] max-w-sm mx-auto mb-8">
-        This article is available to <strong>{requiredPlan}</strong> members.
-        {isDeepRoots
-          ? " Upgrade to go deeper — exclusive posts, AI-powered search, and more."
-          : " Join to unlock all premium articles across every category."}
-      </p>
+      <h2 className="font-serif text-2xl font-bold text-[var(--foreground)] mb-3">{title}</h2>
+      <p className="text-[var(--text-muted)] max-w-md mx-auto mb-8">{body}</p>
 
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <Link
-          href={planHref}
+          href={primaryHref}
           className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[var(--color-harvest-500)] text-white font-semibold hover:bg-[var(--color-harvest-600)] transition-colors"
         >
-          See plans →
+          {primaryLabel}
         </Link>
-        <Link
-          href="/sign-in"
-          className="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-[var(--border)] text-[var(--text-muted)] font-semibold hover:border-[var(--color-sage-400)] transition-colors"
-        >
-          Sign in
-        </Link>
+        {showSignIn && (
+          <Link
+            href="/sign-in"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-[var(--border)] text-[var(--text-muted)] font-semibold hover:border-[var(--color-sage-400)] transition-colors"
+          >
+            Already a member? Sign in
+          </Link>
+        )}
       </div>
+
+      {/* Back to feed for signed-in users */}
+      {viewerPlan !== "FREE" && (
+        <div className="mt-8">
+          <Link
+            href="/dashboard"
+            className="text-sm text-[var(--text-muted)] hover:text-[var(--color-sage-600)] transition-colors"
+          >
+            ← Back to my feed
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

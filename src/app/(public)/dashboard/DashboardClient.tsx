@@ -104,7 +104,7 @@ function DiscoverUpsell({ isPaid }: { isPaid: boolean }) {
 
   async function upgrade() {
     setLoading(true);
-    // Already subscribed → route to Stripe portal for transparent confirmation
+    // Already subscribed → route to upgrade-portal (handles trial vs proration internally)
     // Not subscribed → start a fresh checkout
     const endpoint = isPaid ? "/api/stripe/upgrade-portal" : "/api/stripe/checkout";
     const res = await fetch(endpoint, {
@@ -113,8 +113,14 @@ function DiscoverUpsell({ isPaid }: { isPaid: boolean }) {
       body: JSON.stringify({ plan: "DEEP_ROOTS" }),
     });
     const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else setLoading(false);
+    if (data.url) {
+      window.location.href = data.url;
+    } else if (data.upgraded) {
+      // Trial-preserving upgrade succeeded — refresh the page so new plan loads
+      window.location.href = "/dashboard?welcomed=1";
+    } else {
+      setLoading(false);
+    }
   }
 
   return (
@@ -395,18 +401,15 @@ function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, like
       )}
 
       {/* Page header */}
-      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-[var(--foreground)]">
-            {isPaid ? "My Feed" : "Discover"}
-          </h1>
-          <p className="text-sm text-[var(--text-muted)] mt-1">
-            {isPaid
-              ? `${totalPosts} articles across 5 topics`
-              : `${totalPosts} articles — upgrade for personalized suggestions`}
-          </p>
-        </div>
-{/* Settings accessible via header icon */}
+      <div className="mb-6 text-center">
+        <h1 className="font-serif text-3xl font-bold text-[var(--foreground)]">
+          {isPaid ? "My Feed" : "Discover"}
+        </h1>
+        <p className="text-sm text-[var(--text-muted)] mt-1">
+          {isPaid
+            ? `${totalPosts} articles across 5 topics`
+            : `${totalPosts} articles — upgrade for personalized suggestions`}
+        </p>
       </div>
 
 {/* Upgrade CTA removed — OnboardingCard handles first-visit messaging */}
