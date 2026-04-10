@@ -10,15 +10,21 @@ export default async function DashboardPage() {
 
   const userId = session.user.id;
 
-  // Always read subscription from DB — JWT token can be stale after sync
-  const sub = await prisma.subscription.findUnique({
-    where: { userId },
-    select: { status: true, plan: true, trialEnd: true },
-  });
+  // Always read user + subscription from DB — JWT token can be stale after sync
+  const [user, sub] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
+    prisma.subscription.findUnique({
+      where: { userId },
+      select: { status: true, plan: true, trialEnd: true },
+    }),
+  ]);
 
-  const isPaid = sub?.status === "ACTIVE";
-  const isDeepRoots = isPaid && sub?.plan === "DEEP_ROOTS";
-  const plan = (sub?.plan as string | null) ?? null;
+  // ADMIN users get Deep Roots access automatically — no Stripe needed.
+  // Owner comp accounts are common SaaS practice.
+  const isAdmin = user?.role === "ADMIN";
+  const isPaid = isAdmin || sub?.status === "ACTIVE";
+  const isDeepRoots = isAdmin || (isPaid && sub?.plan === "DEEP_ROOTS");
+  const plan = isAdmin ? "DEEP_ROOTS" : ((sub?.plan as string | null) ?? null);
 
   const [suggestions, liked, history, totalPosts] = await Promise.all([
     isPaid ? getSuggestions(userId) : Promise.resolve([]),

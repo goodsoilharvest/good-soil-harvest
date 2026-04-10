@@ -13,6 +13,7 @@ type Props = {
   status: string;
   currentPeriodEnd: string | null;
   trialEnd: string | null;
+  isAdmin?: boolean;
 };
 
 function trialDaysLeft(trialEnd: string | null): number | null {
@@ -48,7 +49,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function AccountDropdown() {
+function AccountDropdown({ isAdmin = false }: { isAdmin?: boolean }) {
   const [open, setOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -134,21 +135,25 @@ function AccountDropdown() {
           >
             ↩ Sign out
           </button>
-          <div className="border-t border-[var(--border)] my-1" />
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors w-full text-left disabled:opacity-50"
-          >
-            {deleting ? "Deleting…" : deleteConfirm ? "⚠ Click again to confirm permanent deletion" : "🗑 Delete account"}
-          </button>
+          {!isAdmin && (
+            <>
+              <div className="border-t border-[var(--border)] my-1" />
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors w-full text-left disabled:opacity-50"
+              >
+                {deleting ? "Deleting…" : deleteConfirm ? "⚠ Click again to confirm permanent deletion" : "🗑 Delete account"}
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function AccountContent({ userId, email, memberSince, plan, status, currentPeriodEnd, trialEnd }: Props) {
+function AccountContent({ userId, email, memberSince, plan, status, currentPeriodEnd, trialEnd, isAdmin = false }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const upgraded = searchParams.get("upgraded") === "1";
@@ -292,7 +297,18 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
 
       {/* Membership */}
       <Section title="Membership">
-        {isActive && info ? (
+        {isAdmin ? (
+          <div className="flex items-center gap-4 p-4 rounded-xl border border-[var(--color-harvest-200)] bg-[var(--color-harvest-50)]">
+            <span className="text-4xl">👑</span>
+            <div className="flex-1">
+              <p className="font-bold text-lg text-[var(--color-harvest-700)]">Owner / Admin</p>
+              <p className="text-xs text-[var(--text-muted)]">Full Deep Roots access — no subscription</p>
+            </div>
+            <span className="text-xs font-semibold uppercase tracking-wide text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">
+              Comp
+            </span>
+          </div>
+        ) : isActive && info ? (
           <>
             <div className={`flex items-center gap-4 p-4 rounded-xl border ${info.border} ${info.bg}`}>
               <span className="text-4xl">{info.icon}</span>
@@ -426,7 +442,7 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
 
       {/* Account dropdown */}
       <Section title="More">
-        <AccountDropdown />
+        <AccountDropdown isAdmin={isAdmin} />
       </Section>
 
     </div>

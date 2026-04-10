@@ -11,15 +11,23 @@ export async function DELETE() {
 
   const userId = session.user.id;
 
-  // Cancel any active Stripe subscription before deleting
+  // Cancel any active Stripe subscription AND delete the customer record before deleting the user
   const subscription = await prisma.subscription.findUnique({ where: { userId } });
+  const stripe = getStripe();
 
   if (subscription?.stripeSubscriptionId) {
     try {
-      const stripe = getStripe();
       await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
     } catch {
-      // Subscription may already be canceled — continue with deletion
+      // May already be canceled — continue
+    }
+  }
+
+  if (subscription?.stripeCustomerId) {
+    try {
+      await stripe.customers.del(subscription.stripeCustomerId);
+    } catch {
+      // May already be deleted — continue
     }
   }
 

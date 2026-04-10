@@ -16,6 +16,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "unverified", email: session.user.email }, { status: 403 });
     }
 
+    // ADMIN users get free Deep Roots access — refuse to take their money
+    if (user?.role === "ADMIN") {
+      return NextResponse.json(
+        { error: "admin_comp", message: "Admin accounts have free Deep Roots access" },
+        { status: 403 }
+      );
+    }
+
     const { plan } = (await req.json()) as { plan: PlanKey };
     if (!PLANS[plan]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
@@ -46,11 +54,21 @@ export async function POST(req: NextRequest) {
     // ── No existing subscription → create Checkout session (first time) ─────
     let customerId = existingSub?.stripeCustomerId;
     if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: session.user.email,
-        metadata: { userId: session.user.id! },
-      });
-      customerId = customer.id;
+      // Avoid duplicate customers — search for an existing one by email first
+      const existing = await stripe.customers.list({ email: session.user.email, limit: 1 });
+      if (existing.data.length > 0) {
+        customerId = existing.data[0].id;
+        // Update metadata so it links to this user
+        await stripe.customers.update(customerId, {
+          metadata: { userId: session.user.id! },
+        });
+      } else {
+        const customer = await stripe.customers.create({
+          email: session.user.email,
+          metadata: { userId: session.user.id! },
+        });
+        customerId = customer.id;
+      }
     }
 
     const origin =

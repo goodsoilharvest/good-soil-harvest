@@ -12,15 +12,18 @@ export default async function AccountPage() {
     prisma.subscription.findUnique({ where: { userId: session.user.id } }),
   ]);
 
+  const isAdmin = user?.role === "ADMIN";
+
   return (
     <AccountClient
       userId={session.user.id}
       email={session.user.email ?? ""}
       memberSince={user?.createdAt?.toISOString() ?? null}
-      plan={sub?.plan ?? null}
-      status={sub?.status ?? "FREE"}
-      currentPeriodEnd={sub?.currentPeriodEnd?.toISOString() ?? null}
-      trialEnd={sub?.trialEnd?.toISOString() ?? null}
+      plan={isAdmin ? "DEEP_ROOTS" : (sub?.plan ?? null)}
+      status={isAdmin ? "ACTIVE" : (sub?.status ?? "FREE")}
+      currentPeriodEnd={isAdmin ? null : (sub?.currentPeriodEnd?.toISOString() ?? null)}
+      trialEnd={isAdmin ? null : (sub?.trialEnd?.toISOString() ?? null)}
+      isAdmin={isAdmin}
     />
   );
 }
