@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 // the feedback page. Uses Haiku for cost-efficient summarization.
 export async function POST() {
   const session = await auth();
-  if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
+  if (!session || session.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
