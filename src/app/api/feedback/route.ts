@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 const VALID_TYPES = ["BUG", "FEATURE", "COMMENT", "QUESTION"] as const;
 type FeedbackType = (typeof VALID_TYPES)[number];
@@ -19,6 +20,21 @@ export async function POST(req: NextRequest) {
   }
   if (message.length > 4000) {
     return NextResponse.json({ error: "Message too long (max 4000 chars)" }, { status: 400 });
+  }
+
+  // Rate limit: 10 feedback items per hour per user (or IP if anonymous)
+  const identifier = session?.user?.id ?? getClientIp(req);
+  const limit = await rateLimit({
+    action: "feedback",
+    identifier,
+    max: 10,
+    windowSeconds: 60 * 60,
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too much feedback, too fast. Please wait a bit and try again." },
+      { status: 429 }
+    );
   }
 
   const feedbackType: FeedbackType =

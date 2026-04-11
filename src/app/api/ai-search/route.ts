@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic();  // reads ANTHROPIC_API_KEY automatically
@@ -12,12 +13,32 @@ export async function POST(req: NextRequest) {
   }
 
   // AI search is a Deep Roots exclusive — check DB directly (not stale JWT)
-  const sub = await prisma.subscription.findUnique({
-    where: { userId: session.user.id },
-    select: { plan: true, status: true },
+  // Admin users also get access.
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, subscription: { select: { plan: true, status: true } } },
   });
-  if (sub?.plan !== "DEEP_ROOTS" || sub?.status !== "ACTIVE") {
+  const isAdmin = user?.role === "ADMIN";
+  const isDeepRoots = user?.subscription?.plan === "DEEP_ROOTS" && user?.subscription?.status === "ACTIVE";
+  if (!isAdmin && !isDeepRoots) {
     return NextResponse.json({ error: "Deep Roots membership required" }, { status: 403 });
+  }
+
+  // Rate limit: 30 searches per hour per user (protects against cost abuse).
+  // Each call is ~$0.0001-0.0004 so 30/hr is generous but bounds worst case.
+  const limit = await rateLimit({
+    action: "ai-search",
+    identifier: session.user.id,
+    max: 30,
+    windowSeconds: 60 * 60,
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      {
+        error: `You've used all your AI searches this hour. Try again in ${Math.ceil(limit.retryAfterSeconds / 60)} minutes.`,
+      },
+      { status: 429 }
+    );
   }
 
   const { query } = (await req.json()) as { query?: string };

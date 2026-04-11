@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
@@ -17,6 +18,20 @@ export async function POST(req: NextRequest) {
   }
 
   const email = rawEmail.trim().toLowerCase();
+
+  // Rate limit signups per IP (prevent spam registrations)
+  const ipLimit = await rateLimit({
+    action: "register",
+    identifier: getClientIp(req),
+    max: 5,
+    windowSeconds: 60 * 60, // 5 per hour
+  });
+  if (!ipLimit.ok) {
+    return NextResponse.json(
+      { error: `Too many signup attempts. Try again in ${Math.ceil(ipLimit.retryAfterSeconds / 60)} minutes.` },
+      { status: 429 }
+    );
+  }
 
   const pwErrors = [];
   if (password.length < 8)             pwErrors.push("at least 8 characters");

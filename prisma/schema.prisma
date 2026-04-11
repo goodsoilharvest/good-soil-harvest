@@ -211,6 +211,17 @@ model TrialClaim {
   claimedAt  DateTime @default(now())
 }
 
+// ─── Rate Limiting ───────────────────────────────────────────────────────────
+// DB-backed rate limits for sensitive endpoints. Keyed by "action:identifier"
+// e.g. "forgot-password:alice@example.com" or "ai-search:user_abc123".
+// Old rows get garbage-collected by the rate limiter itself as a side effect.
+model RateLimit {
+  key         String   @id
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+  @@index([windowStart])
+}
+
 // ─── AI Usage Logging ────────────────────────────────────────────────────────
 
 model AiSearchLog {

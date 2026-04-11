@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendContactEmail } from "@/lib/email";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,6 +16,23 @@ export async function POST(req: NextRequest) {
 
     if (message.trim().length < 10) {
       return NextResponse.json({ error: "Message is too short" }, { status: 400 });
+    }
+    if (message.length > 5000 || name.length > 200 || email.length > 200) {
+      return NextResponse.json({ error: "Field too long" }, { status: 400 });
+    }
+
+    // Rate limit: 5 contact submissions per hour per IP
+    const limit = await rateLimit({
+      action: "contact",
+      identifier: getClientIp(req),
+      max: 5,
+      windowSeconds: 60 * 60,
+    });
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Too many messages. Please wait a bit before sending another." },
+        { status: 429 }
+      );
     }
 
     await sendContactEmail({ name: name.trim(), email: email.trim(), message: message.trim() });

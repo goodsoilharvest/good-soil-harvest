@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Allow: /blog
+Allow: /niches
+Allow: /pricing
+Allow: /privacy
+Allow: /terms
+Allow: /disclaimer
+Allow: /contact
+
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /admin/*
+Disallow: /account
+Disallow: /dashboard
+Disallow: /sign-in
+Disallow: /register
+Disallow: /verify-email
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://www.goodsoilharvest.com/sitemap.xml
