@@ -1,13 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+function checkAuth(req: NextRequest) {
+  const auth = req.headers.get("authorization");
+  const secret = process.env.AGENT_API_SECRET;
+  if (!secret || auth !== `Bearer ${secret}`) return false;
+  return true;
+}
+
+// GET existing titles so the daily blog run can dedupe without touching
+// the Documents folder (which trips macOS TCC on launchd jobs).
+export async function GET(req: NextRequest) {
+  if (!checkAuth(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const [posts, drafts] = await Promise.all([
+    prisma.post.findMany({ select: { title: true, niche: true } }),
+    prisma.agentDraft.findMany({ select: { title: true, niche: true } }),
+  ]);
+
+  return NextResponse.json({ posts, drafts });
+}
+
 // Agents POST drafts here with a shared secret in the Authorization header
 // Header: Authorization: Bearer <AGENT_API_SECRET>
 export async function POST(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  const secret = process.env.AGENT_API_SECRET;
-
-  if (!secret || auth !== `Bearer ${secret}`) {
+  if (!checkAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

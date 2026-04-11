@@ -198,10 +198,16 @@ function AccountDropdown({ isAdmin = false, isPaid = false }: { isAdmin?: boolea
             </p>
             <ul className="space-y-2 text-sm mb-4">
               {isPaid && (
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600 shrink-0 mt-0.5">✓</span>
-                  <span className="text-[var(--foreground)]">Your active subscription will be <strong>canceled immediately</strong> on Stripe — no further charges.</span>
-                </li>
+                <>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 shrink-0 mt-0.5">✓</span>
+                    <span className="text-[var(--foreground)]">Your active subscription will be <strong>canceled immediately</strong> on Stripe — no further charges.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 shrink-0 mt-0.5">✓</span>
+                    <span className="text-[var(--foreground)]">A <strong>prorated refund</strong> for the unused portion of your current billing period will be issued to your card (appears within 5–10 business days). Free trials have no charge to refund.</span>
+                  </li>
+                </>
               )}
               <li className="flex items-start gap-2">
                 <span className="text-green-600 shrink-0 mt-0.5">✓</span>
@@ -221,7 +227,7 @@ function AccountDropdown({ isAdmin = false, isPaid = false }: { isAdmin?: boolea
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-red-600 shrink-0 mt-0.5">✗</span>
-                <span className="text-[var(--text-muted)]"><strong>This cannot be undone.</strong> You can sign back up later, but your reading history and any active billing period are gone.</span>
+                <span className="text-[var(--text-muted)]"><strong>This cannot be undone.</strong> You can sign back up later, but your reading history is gone.</span>
               </li>
             </ul>
 
