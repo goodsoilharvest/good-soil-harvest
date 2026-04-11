@@ -101,8 +101,11 @@ export default function PricingPage() {
         <h1 className="font-serif text-4xl sm:text-5xl font-bold text-[var(--foreground)] mb-4">
           Good soil produces good fruit.
         </h1>
-        <p className="text-lg text-[var(--text-muted)] max-w-xl mx-auto">
+        <p className="text-lg text-[var(--text-muted)] max-w-xl mx-auto mb-3">
           Choose the depth that fits your season. Cancel anytime.
+        </p>
+        <p className="inline-block text-xs font-semibold uppercase tracking-widest text-[var(--color-harvest-700)] bg-[var(--color-harvest-50)] border border-[var(--color-harvest-200)] rounded-full px-4 py-1.5">
+          ✨ 7-day free trial on every plan — no charge until day 8
         </p>
       </div>
 
@@ -132,10 +135,13 @@ export default function PricingPage() {
               </div>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-2">
               <span className="font-serif text-4xl font-bold text-[var(--foreground)]">{plan.price}</span>
               <span className="text-[var(--text-muted)] text-sm ml-1">{plan.period}</span>
             </div>
+            <p className="text-xs text-[var(--color-sage-700)] font-semibold mb-6">
+              🌱 7-day free trial — no charge until day 8
+            </p>
 
             <ul className="space-y-3 mb-8 flex-1">
               {plan.features.map((f, i) => (
@@ -151,7 +157,7 @@ export default function PricingPage() {
               disabled={!!loading}
               className={`w-full py-3 rounded-xl font-semibold transition-colors disabled:opacity-50 ${plan.ctaClass}`}
             >
-              {loading === plan.id ? "Redirecting…" : `Start ${plan.name}`}
+              {loading === plan.id ? "Redirecting…" : `Start 7-day free trial`}
             </button>
           </div>
         ))}
@@ -180,7 +186,8 @@ export default function PricingPage() {
 
       {/* FAQ / trust */}
       <div className="mt-14 text-center space-y-2 text-sm text-[var(--text-muted)]">
-        <p>All plans are billed monthly. Cancel any time from your account — no hassle.</p>
+        <p>Every paid plan starts with a 7-day free trial. You&apos;re not charged until the trial ends — cancel any time before then at no cost.</p>
+        <p>All plans are billed monthly. Cancel any time from your account.</p>
         <p>
           Questions?{" "}
           <Link href="/contact" className="underline hover:text-[var(--foreground)] transition-colors">
