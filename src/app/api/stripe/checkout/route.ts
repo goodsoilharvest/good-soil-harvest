@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { stripe, PLANS, type PlanKey } from "@/lib/stripe";
+import { stripe, PLANS, assertStripeUrl, type PlanKey } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ url: checkoutSession.url });
+    return NextResponse.json({ url: assertStripeUrl(checkoutSession.url) });
   } catch (err) {
     console.error("[stripe/checkout]", err);
     const message = err instanceof Error ? err.message : "Unexpected error";

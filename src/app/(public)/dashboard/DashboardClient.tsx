@@ -214,7 +214,7 @@ function OnboardingCard({ isPaid, isDeepRoots }: { isPaid: boolean; isDeepRoots:
   ];
 
   return (
-    <div className="mb-6 rounded-2xl border border-[var(--color-sage-200)] bg-[var(--color-sage-50)] p-6">
+    <div className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-6">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <h2 className="font-serif text-lg font-bold text-[var(--foreground)]">Welcome to Good Soil Harvest 🌱</h2>
@@ -378,11 +378,11 @@ function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, like
 
       {/* Welcome banner */}
       {welcomed && planLabel && (
-        <div className="mb-6 rounded-xl bg-[var(--color-sage-50)] border border-[var(--color-sage-200)] px-5 py-4 flex items-center justify-between flex-wrap gap-3">
-          <p className="text-sm font-semibold text-[var(--color-sage-700)]">
+        <div className="mb-6 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] px-5 py-4 flex items-center justify-between flex-wrap gap-3">
+          <p className="text-sm font-semibold text-[var(--foreground)]">
             🎉 Welcome! Your {planLabel} membership is active.
           </p>
-          <Link href="/account" className="text-xs text-[var(--color-sage-600)] hover:underline font-medium">
+          <Link href="/account" className="text-xs text-[var(--text-muted)] hover:text-[var(--foreground)] hover:underline font-medium">
             ⚙ Manage account & billing →
           </Link>
         </div>

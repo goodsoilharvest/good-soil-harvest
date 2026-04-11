@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -15,6 +16,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!credentials?.email) return null;
 
         const emailLower = (credentials.email as string).trim().toLowerCase();
+
+        // Throttle brute-force attempts at a specific account. 10 tries per 15
+        // minutes per email. Login tokens bypass this since they're single-use
+        // post-verification and already expire in 5 minutes.
+        if (!credentials.loginToken) {
+          const limit = await rateLimit({
+            action: "signin",
+            identifier: emailLower,
+            max: 10,
+            windowSeconds: 60 * 15,
+          });
+          if (!limit.ok) {
+            // NextAuth authorize() can only return null/user — it can't return
+            // a 429. Returning null here forces the client to show "invalid
+            // credentials" which is the correct UX for a blocked attacker.
+            return null;
+          }
+        }
+
         const user = await prisma.user.findUnique({
           where: { email: emailLower },
           include: { subscription: true },

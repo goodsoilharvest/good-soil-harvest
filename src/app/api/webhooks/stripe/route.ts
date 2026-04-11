@@ -22,6 +22,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  // Idempotency: if we've already processed this event, acknowledge and stop.
+  // Stripe retries on 5xx and occasionally sends duplicates even on 2xx,
+  // so double-processing has to be impossible, not just unlikely.
+  try {
+    await prisma.webhookEvent.create({
+      data: { stripeEventId: event.id, eventType: event.type },
+    });
+  } catch (err) {
+    // Unique constraint violation = already seen. Return 200 so Stripe stops retrying.
+    if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    // Any other error — log but continue, so a transient DB blip doesn't lose the event
+    console.error("[webhooks/stripe] idempotency insert failed:", err);
+  }
+
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;

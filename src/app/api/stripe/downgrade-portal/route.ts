@@ -3,18 +3,19 @@ import { auth } from "@/auth";
 import { stripe, PLANS, assertStripeUrl, type PlanKey, planFromPriceId } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
-// Plan upgrade entry point.
+// Plan downgrade entry point. Mirrors the upgrade-portal pattern so trial
+// protection is symmetric across both directions.
 //
 // Two paths depending on whether the user is in a free trial:
 //
 // 1) User IS in trial → bypass the Customer Portal and do a direct API update.
-//    The trial is preserved, no charge happens, and the user gets the new
-//    plan benefits immediately. Returns { ok: true, upgraded: true }.
+//    The trial is preserved (trial_end unchanged), no charge happens, and the
+//    user moves to the cheaper plan. Returns { ok: true, downgraded: true,
+//    trialPreserved: true, newPlan }.
 //
 // 2) User is NOT in trial → return a Customer Portal session URL deep-linked
-//    to the "subscription update confirm" flow so the user sees Stripe's
-//    proration math and explicit confirmation before any charge. Returns
-//    { url }.
+//    to Stripe's subscription_update_confirm flow so the user sees the exact
+//    proration numbers before committing. Returns { url }.
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -45,7 +46,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Subscription has no items" }, { status: 500 });
   }
 
-  // Skip the upgrade if they're already on this plan
   const currentPriceId = stripeSub.items.data[0]?.price.id;
   if (currentPriceId === targetPriceId) {
     return NextResponse.json({ ok: true, alreadyOnPlan: true });
@@ -59,14 +59,11 @@ export async function POST(req: NextRequest) {
   if (isInTrial) {
     const updated = await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
       items: [{ id: itemId, price: targetPriceId, quantity: 1 }],
-      // Preserve the existing trial end — don't reset it, don't end it early
       trial_end: stripeSub.trial_end ?? undefined,
-      // No proration during trial — they're not paying for anything yet
       proration_behavior: "none",
       metadata: { userId: session.user.id, plan },
     });
 
-    // Sync our DB immediately (the webhook will also fire but this avoids any race)
     const newPlan = planFromPriceId(targetPriceId) ?? plan;
     const periodEnd =
       (updated.items.data[0] as { current_period_end?: number } | undefined)?.current_period_end ?? null;
@@ -81,7 +78,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      upgraded: true,
+      downgraded: true,
       trialPreserved: true,
       newPlan,
     });

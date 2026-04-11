@@ -53,3 +53,20 @@ export function planFromPriceId(priceId: string): PlanKey | null {
   if (priceId === process.env.STRIPE_PRICE_DEEP_ROOTS) return "DEEP_ROOTS";
   return null;
 }
+
+/**
+ * Safety check: verify a URL is a real Stripe-owned domain before returning
+ * it to the client for redirect. Prevents a theoretical compromise of the
+ * Stripe API response from phishing our users off-platform.
+ */
+export function assertStripeUrl(url: string | null): string {
+  if (!url) throw new Error("Stripe returned an empty URL");
+  const allowed = [
+    "https://checkout.stripe.com/",
+    "https://billing.stripe.com/",
+  ];
+  if (!allowed.some((prefix) => url.startsWith(prefix))) {
+    throw new Error(`Refusing to redirect to non-Stripe URL: ${url}`);
+  }
+  return url;
+}

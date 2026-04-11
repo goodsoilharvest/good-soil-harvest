@@ -11,8 +11,21 @@ export async function POST(req: NextRequest) {
 
   const { currentPassword, newPassword } = await req.json();
 
-  if (!currentPassword || !newPassword || newPassword.length < 8) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  if (!currentPassword || !newPassword) {
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  // Same password rules as /register and /reset-password
+  const pwErrors = [];
+  if (newPassword.length < 8)             pwErrors.push("at least 8 characters");
+  if (!/[A-Z]/.test(newPassword))         pwErrors.push("one uppercase letter");
+  if (!/[0-9]/.test(newPassword))         pwErrors.push("one number");
+  if (!/[^A-Za-z0-9]/.test(newPassword)) pwErrors.push("one special character");
+  if (pwErrors.length) {
+    return NextResponse.json(
+      { error: `Password must contain: ${pwErrors.join(", ")}` },
+      { status: 400 }
+    );
   }
 
   const user = await prisma.user.findUnique({
@@ -28,7 +41,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Current password is incorrect" }, { status: 403 });
   }
 
-  const newHash = await bcrypt.hash(newPassword, 12);
+  const newHash = await bcrypt.hash(newPassword, 13);
   await prisma.user.update({
     where: { email: session.user.email! },
     data: { passwordHash: newHash },

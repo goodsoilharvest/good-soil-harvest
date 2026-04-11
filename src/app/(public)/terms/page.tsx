@@ -10,7 +10,7 @@ export default function TermsPage() {
   return (
     <div className="max-w-[var(--max-w-prose)] mx-auto px-4 sm:px-6 py-14">
       <h1 className="font-serif text-4xl font-bold text-[var(--foreground)] mb-2">Terms of Service</h1>
-      <p className="text-sm text-[var(--text-muted)] mb-10">Last updated: April 8, 2026</p>
+      <p className="text-sm text-[var(--text-muted)] mb-10">Last updated: April 11, 2026</p>
 
       <div className="prose text-[var(--foreground)]">
 
@@ -52,37 +52,89 @@ export default function TermsPage() {
         <h3>Free Trial</h3>
         <p>
           New subscribers may receive a 7-day free trial on qualifying plans. Your payment
-          method will be charged automatically at the end of the trial period unless you cancel
-          before the trial ends. Only one free trial per person.
+          method will be charged automatically at the end of the trial period unless you
+          cancel before the trial ends. Only one free trial per person — we track trial
+          claims by email address, so deleting an account and re-signing up with the same
+          email will not grant a second trial.
         </p>
 
         <h3>Recurring Billing</h3>
         <p>
           Paid subscriptions are billed on a recurring monthly basis. By subscribing, you
           authorize Good Soil Harvest to charge your payment method on file through Stripe
-          on each billing cycle until you cancel.
+          on each billing cycle until you cancel. All payments are processed by Stripe; we
+          do not store full card numbers on our servers.
         </p>
 
         <h3>Cancellation</h3>
         <p>
-          You may cancel your subscription at any time through your account settings (&ldquo;Manage
-          billing&rdquo;). Cancellation takes effect at the end of your current billing period — you
-          retain access to premium content through that date. We do not issue prorated refunds
-          for partial months, except where required by applicable law.
+          You may cancel your subscription at any time through your account settings
+          (&ldquo;Manage billing, cancel, or update payment&rdquo;), which opens the Stripe customer
+          portal. Cancellation takes effect at the end of your current billing period — you
+          retain access to premium content through that date. Canceling a subscription does
+          not, by itself, delete your account or issue a refund; see &ldquo;Account Deletion and
+          Refunds&rdquo; below for the refund policy that applies when you fully delete your account.
         </p>
 
         <h3>Plan Changes</h3>
         <p>
-          You may upgrade or downgrade your plan at any time. Upgrades take effect immediately
-          with proration applied to your next invoice. Downgrades take effect at the end of
-          your current billing period.
+          You may upgrade or downgrade your plan at any time from your account page. How the
+          change is processed depends on whether you are currently in a free trial:
         </p>
+        <ul>
+          <li>
+            <strong>During a free trial:</strong> Your trial continues unchanged on the new
+            plan — the original trial end date is preserved and no charge is made at the
+            time of the plan change. When the trial ends, you will be charged the new plan&rsquo;s
+            monthly rate instead of the original rate.
+          </li>
+          <li>
+            <strong>Upgrading while paid:</strong> Your plan changes immediately. A prorated
+            charge for the remaining days on the higher plan, offset by a prorated credit
+            for the unused days on the lower plan, is applied to your next monthly invoice.
+            You will see the exact numbers on a confirmation screen from Stripe before the
+            change is finalized.
+          </li>
+          <li>
+            <strong>Downgrading while paid:</strong> Your plan changes immediately. A
+            prorated credit for the unused days on the higher plan is queued as a line item
+            on your next monthly invoice, where it offsets that invoice&rsquo;s charge. Stripe will
+            show you the exact numbers on a confirmation screen before the change is finalized.
+          </li>
+        </ul>
+
+        <h3>Account Deletion and Refunds</h3>
+        <p>
+          You may permanently delete your account at any time from your account page. When
+          you delete your account:
+        </p>
+        <ul>
+          <li>Your active subscription is canceled immediately.</li>
+          <li>
+            If you have paid for a period that is not yet fully used, we will issue a
+            prorated refund for the unused portion of that period back to the payment
+            method on file. Refunds typically appear within 5–10 business days. Stripe
+            payment processing fees are not returned to us on refunds, so we absorb that
+            cost as part of our customer-friendly refund policy.
+          </li>
+          <li>
+            If you delete your account during a free trial, there is no charge to refund.
+          </li>
+          <li>
+            Your Stripe customer record, reading history, likes, and saved items are
+            deleted permanently and cannot be recovered.
+          </li>
+          <li>
+            Your email address is retained in a limited fraud-prevention log so the same
+            email cannot claim another free trial in the future.
+          </li>
+        </ul>
 
         <h3>Payment Failures</h3>
         <p>
-          If your payment method fails, access to premium content may be suspended until the
-          balance is resolved. We will notify you by email. You can update your payment method
-          through the billing portal in your account settings.
+          If your payment method fails, access to premium content may be suspended until
+          the balance is resolved. We will notify you by email. You can update your payment
+          method through the billing portal in your account settings.
         </p>
 
         <h2>4. Content and Intellectual Property</h2>
@@ -153,9 +205,11 @@ export default function TermsPage() {
         <h2>9. Termination</h2>
         <p>
           We may suspend or terminate your account at any time for violation of these Terms,
-          with or without notice. Upon termination, your access to premium content will end.
-          If we terminate your account without cause, we will issue a prorated refund for
-          any unused subscription period.
+          with or without notice. Upon termination for cause (e.g., abuse, chargebacks,
+          fraud, or breach of these Terms), your access to premium content will end and no
+          refund will be issued. If we terminate your account without cause, we will issue
+          a prorated refund for any unused subscription period following the same policy as
+          user-initiated account deletion described in Section 3.
         </p>
 
         <h2>10. Governing Law</h2>

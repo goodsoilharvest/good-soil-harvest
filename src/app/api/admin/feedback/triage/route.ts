@@ -82,8 +82,9 @@ Output ONLY a JSON array of objects in order, one per item. No prose, no markdow
   try {
     parsed = JSON.parse(cleaned);
   } catch {
+    console.error("[feedback/triage] failed to parse AI response:", text.slice(0, 500));
     return NextResponse.json(
-      { error: "Failed to parse AI response", raw: text.slice(0, 500) },
+      { error: "Failed to parse triage response" },
       { status: 502 }
     );
   }

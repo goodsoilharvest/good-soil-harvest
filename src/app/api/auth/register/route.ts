@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash = await bcrypt.hash(password, 13);
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const exp = new Date(Date.now() + 1000 * 60 * 30); // 30 minutes
 

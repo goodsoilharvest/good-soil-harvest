@@ -24,21 +24,20 @@ export async function DELETE() {
       refundedCents = await issueProratedRefund(stripe, stripeSub);
     } catch (err) {
       console.error("[account/delete] refund path failed:", err);
-      // non-fatal — continue with cancellation
     }
 
     try {
       await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
-    } catch {
-      // May already be canceled — continue
+    } catch (err) {
+      console.error("[account/delete] subscription cancel failed (may already be canceled):", err);
     }
   }
 
   if (subscription?.stripeCustomerId) {
     try {
       await stripe.customers.del(subscription.stripeCustomerId);
-    } catch {
-      // May already be deleted — continue
+    } catch (err) {
+      console.error("[account/delete] customer delete failed (may already be deleted):", err);
     }
   }
 
@@ -49,8 +48,8 @@ export async function DELETE() {
         create: { email: userEmail },
         update: {},
       });
-    } catch {
-      // non-fatal — continue with deletion
+    } catch (err) {
+      console.error("[account/delete] trial claim upsert failed:", err);
     }
   }
 
@@ -65,7 +64,9 @@ async function issueProratedRefund(
   stripe: Stripe,
   sub: Stripe.Subscription
 ): Promise<number> {
-  if (sub.status !== "active") return 0;
+  // Both "active" and "past_due" users have paid for a period that may still
+  // be unused. Skip trialing (no charge) and canceled/incomplete (already over).
+  if (sub.status !== "active" && sub.status !== "past_due") return 0;
 
   const item = sub.items?.data?.[0] as
     | (Stripe.SubscriptionItem & { current_period_start?: number; current_period_end?: number })

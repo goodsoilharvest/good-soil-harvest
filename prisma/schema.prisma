@@ -222,6 +222,17 @@ model RateLimit {
   @@index([windowStart])
 }
 
+// ─── Stripe Webhook Idempotency ──────────────────────────────────────────────
+// Records every Stripe event ID we've processed so retries and duplicate
+// deliveries are no-ops. Stripe can retry on 5xx and occasionally sends
+// duplicates even on 2xx success under load.
+model WebhookEvent {
+  stripeEventId String   @id
+  eventType     String
+  processedAt   DateTime @default(now())
+  @@index([processedAt])
+}
+
 // ─── AI Usage Logging ────────────────────────────────────────────────────────
 
 model AiSearchLog {

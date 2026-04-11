@@ -362,6 +362,18 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
   }
 
   async function upgradeToDeepRoots() {
+    // Trial users get an in-app confirmation since they skip Stripe's portal.
+    // Paid users will see Stripe's own proration confirmation on the portal.
+    if (isActive && onTrial) {
+      const confirmMsg =
+        "Upgrade to Deep Roots?\n\n" +
+        "• Your free trial continues unchanged — you still won't be charged until it ends.\n" +
+        "• After the trial, $9.99/month will be charged instead of $4.99.\n" +
+        "• You get immediate access to Deep Roots exclusive content and AI search.\n\n" +
+        "Click OK to confirm.";
+      if (!window.confirm(confirmMsg)) return;
+    }
+
     // Existing subscriber → upgrade-portal (handles trial vs proration internally)
     // No subscription → fresh checkout
     const endpoint = isActive ? "/api/stripe/upgrade-portal" : "/api/stripe/checkout";
@@ -377,6 +389,39 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
       // Trial-preserving upgrade succeeded — hard navigate so the account
       // page remounts with fresh server-rendered data
       window.location.href = "/dashboard?welcomed=1";
+    }
+  }
+
+  async function downgradeToSeedling() {
+    // In trial → direct API (preserve trial). Confirm in-app since there's
+    // no Stripe portal confirmation step for trialing users.
+    // Paid → returns Stripe Customer Portal URL with proration confirmation.
+    if (onTrial) {
+      const confirmMsg =
+        "Switch to Seedling?\n\n" +
+        "• Your free trial continues unchanged — you still won't be charged until it ends.\n" +
+        "• After the trial, $4.99/month will be charged instead of $9.99.\n" +
+        "• You'll lose access to Deep Roots exclusive content and AI search.\n\n" +
+        "Click OK to confirm.";
+      if (!window.confirm(confirmMsg)) return;
+    }
+
+    setPortalLoading(true);
+    const res = await fetch("/api/stripe/downgrade-portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: "SEEDLING" }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      // Paid path → Stripe portal for proration confirmation
+      window.location.href = data.url;
+    } else if (data.downgraded) {
+      // Trial path → direct API succeeded, reload to reflect new plan
+      window.location.href = "/account?sync=1";
+    } else {
+      setPortalLoading(false);
+      alert(data.error || "Failed to downgrade. Please try again.");
     }
   }
 
@@ -477,10 +522,19 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
                 {onTrial ? "First charge" : "Renews"} {new Date(currentPeriodEnd).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </p>
             )}
+            {plan === "DEEP_ROOTS" && (
+              <button
+                onClick={downgradeToSeedling}
+                disabled={portalLoading}
+                className="text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] hover:underline disabled:opacity-50 block"
+              >
+                Downgrade to Seedling →
+              </button>
+            )}
             <button
               onClick={openPortal}
               disabled={portalLoading}
-              className="text-sm text-[var(--color-sage-600)] hover:underline disabled:opacity-50"
+              className="text-sm text-[var(--color-sage-600)] hover:underline disabled:opacity-50 block"
             >
               {portalLoading ? "Loading…" : "Manage billing, cancel, or update payment →"}
             </button>

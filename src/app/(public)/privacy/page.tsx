@@ -10,7 +10,7 @@ export default function PrivacyPage() {
   return (
     <div className="max-w-[var(--max-w-prose)] mx-auto px-4 sm:px-6 py-14">
       <h1 className="font-serif text-4xl font-bold text-[var(--foreground)] mb-2">Privacy Policy</h1>
-      <p className="text-sm text-[var(--text-muted)] mb-10">Last updated: April 8, 2026</p>
+      <p className="text-sm text-[var(--text-muted)] mb-10">Last updated: April 11, 2026</p>
 
       <div className="prose text-[var(--foreground)]">
 
@@ -111,13 +111,36 @@ export default function PrivacyPage() {
           publishing process.
         </p>
 
-        <h2>7. Data Retention</h2>
+        <h2>7. Data Retention and Account Deletion</h2>
         <p>
-          We retain your account information for as long as your account exists. Upon a verified
-          deletion request, we will remove your personal data within 30 days, except where
-          retention is required by law (e.g., billing records may be retained up to 7 years for
-          tax and accounting compliance).
+          We retain your account information for as long as your account exists. You can
+          permanently delete your account at any time from your account settings. When you
+          delete your account:
         </p>
+        <ul>
+          <li>
+            Your user record, reading history, saved articles, likes, and content preferences
+            are permanently deleted from our database immediately.
+          </li>
+          <li>
+            Your active subscription is canceled immediately in Stripe, and your Stripe
+            customer record is also deleted. If you have paid for a period that is not yet
+            fully used, a prorated refund is issued automatically to your card for the
+            unused portion. See our <Link href="/terms">Terms of Service</Link> for full
+            details on the refund policy.
+          </li>
+          <li>
+            Your email address is retained in a limited fraud-prevention log (not used for
+            marketing or any other purpose) so that the same email address cannot claim
+            another free trial in the future. This is the only personal data retained after
+            account deletion. You may request removal of this entry by contacting us.
+          </li>
+          <li>
+            Billing records (invoice history) may be retained by Stripe and by us for up to
+            7 years where required by tax, accounting, or legal compliance obligations. These
+            records contain transaction-level data only, not account credentials.
+          </li>
+        </ul>
 
         <h2>8. Children&rsquo;s Privacy</h2>
         <p>

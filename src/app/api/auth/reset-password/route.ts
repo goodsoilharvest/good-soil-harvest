@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
@@ -10,6 +11,34 @@ export async function POST(req: NextRequest) {
 
   if (!token || !rawEmail || !password) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const email = rawEmail.trim().toLowerCase();
+
+  // Rate limit submission per email and per IP to prevent token brute-forcing
+  const emailLimit = await rateLimit({
+    action: "reset-password",
+    identifier: email,
+    max: 10,
+    windowSeconds: 60 * 15,
+  });
+  if (!emailLimit.ok) {
+    return NextResponse.json(
+      { error: `Too many attempts. Try again in ${Math.ceil(emailLimit.retryAfterSeconds / 60)} minutes.` },
+      { status: 429 }
+    );
+  }
+  const ipLimit = await rateLimit({
+    action: "reset-password-ip",
+    identifier: getClientIp(req),
+    max: 20,
+    windowSeconds: 60 * 15,
+  });
+  if (!ipLimit.ok) {
+    return NextResponse.json(
+      { error: `Too many attempts. Try again in ${Math.ceil(ipLimit.retryAfterSeconds / 60)} minutes.` },
+      { status: 429 }
+    );
   }
 
   // Password rules — same as register
@@ -25,7 +54,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const email = rawEmail.trim().toLowerCase();
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (
@@ -41,7 +69,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash = await bcrypt.hash(password, 13);
 
   await prisma.user.update({
     where: { id: user.id },
