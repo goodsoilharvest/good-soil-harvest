@@ -296,15 +296,21 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
       .then(r => r.json())
       .then(data => {
         if (data.url) {
+          // Past trial → route to Stripe portal for proration confirmation
           window.location.href = data.url;
         } else if (data.upgraded) {
-          router.replace("/account?sync=1");
-          router.refresh();
+          // Trial-preserving direct upgrade succeeded — hard navigate to
+          // dashboard with welcome banner. (router.replace doesn't remount
+          // the component so useEffects with [] deps don't re-run, leaving
+          // the UI stuck.)
+          window.location.href = "/dashboard?welcomed=1";
         } else {
-          router.replace("/account");
+          window.location.href = "/account";
         }
       })
-      .catch(() => router.replace("/account"));
+      .catch(() => {
+        window.location.href = "/account";
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -362,9 +368,9 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
     if (data.url) {
       window.location.href = data.url;
     } else if (data.upgraded) {
-      // Trial-preserving upgrade succeeded
-      router.replace("/account?sync=1");
-      router.refresh();
+      // Trial-preserving upgrade succeeded — hard navigate so the account
+      // page remounts with fresh server-rendered data
+      window.location.href = "/dashboard?welcomed=1";
     }
   }
 
