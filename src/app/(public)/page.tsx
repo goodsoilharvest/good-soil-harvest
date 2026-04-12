@@ -5,23 +5,23 @@ import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { auth } from "@/auth";
 
 const SEEDS = [
-  { left: "8%",  delay: "0.0s", dur: "9s",  size: 5 },
-  { left: "19%", delay: "2.8s", dur: "11s", size: 3 },
-  { left: "31%", delay: "5.2s", dur: "8.5s",size: 4 },
-  { left: "44%", delay: "1.5s", dur: "10s", size: 3 },
-  { left: "57%", delay: "4.0s", dur: "9.5s",size: 5 },
-  { left: "68%", delay: "0.8s", dur: "12s", size: 3 },
-  { left: "79%", delay: "6.5s", dur: "9s",  size: 4 },
-  { left: "90%", delay: "3.3s", dur: "11s", size: 3 },
+  { left: "8%",  delay: "0.0s", dur: "3.5s", size: 5 },
+  { left: "19%", delay: "0.8s", dur: "4s",   size: 3 },
+  { left: "31%", delay: "1.5s", dur: "3.2s", size: 4 },
+  { left: "44%", delay: "0.4s", dur: "3.8s", size: 3 },
+  { left: "57%", delay: "1.2s", dur: "3.5s", size: 5 },
+  { left: "68%", delay: "0.2s", dur: "4.2s", size: 3 },
+  { left: "79%", delay: "2.0s", dur: "3.4s", size: 4 },
+  { left: "90%", delay: "1.0s", dur: "4s",   size: 3 },
 ];
 
-// Sprouts positioned to "catch" seeds. delay = seed delay + ~dur*0.88
+// Sprouts positioned to "catch" seeds — appear shortly after seeds land
 const SPROUTS = [
-  { left: "8%",  delay: "8.0s",  dur: "3.5s" },
-  { left: "31%", delay: "12.7s", dur: "3s"   },
-  { left: "44%", delay: "10.3s", dur: "4s"   },
-  { left: "57%", delay: "12.4s", dur: "3.5s" },
-  { left: "79%", delay: "14.4s", dur: "3s"   },
+  { left: "8%",  delay: "3.0s", dur: "1.5s" },
+  { left: "31%", delay: "4.2s", dur: "1.3s" },
+  { left: "44%", delay: "3.6s", dur: "1.6s" },
+  { left: "57%", delay: "4.0s", dur: "1.4s" },
+  { left: "79%", delay: "4.8s", dur: "1.3s" },
 ];
 
 export default async function HomePage() {
@@ -260,6 +260,22 @@ export default async function HomePage() {
               </RevealOnScroll>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── Parallax divider ──────────────────────────────── */}
+      <section className="relative h-[40vh] min-h-[280px] overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-fixed"
+          style={{ backgroundImage: "url(https://www.goodsoilharvest.com/api/img/site/home-parallax-1776003048.jpg)" }}
+        />
+        <div className="absolute inset-0 bg-[var(--color-soil-900)]/60" />
+        <div className="relative z-10 h-full flex items-center justify-center text-center px-4">
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-white/90 max-w-2xl leading-relaxed drop-shadow-lg">
+            &ldquo;But the seed falling on good soil refers to someone who hears the word and
+            understands it.&rdquo;
+            <span className="block text-base font-sans font-normal text-white/50 mt-3">Matthew 13:23</span>
+          </p>
         </div>
       </section>
 
