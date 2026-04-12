@@ -31,14 +31,16 @@ export default function AboutPage() {
 
         <h2>Who&apos;s Behind This</h2>
         <p>
-          Good Soil Harvest was founded by Chris, a software developer, author, and someone who
+          Good Soil Harvest was founded by Christopher J McElwain, a software developer, author, and someone who
           spent most of his adult life as an atheist. That changed after an experience he
           couldn&apos;t explain away — one that set him on a path toward faith and a much deeper
           curiosity about the world.
         </p>
         <p>
-          That journey became a book: <strong><em>Rediscovering Imago Dei — Bridging Reason
-          and Redemption</em></strong>, written for skeptics and deep thinkers who wrestle with
+          That journey became a book:{" "}
+          <a href="https://www.amazon.com/Rediscovering-Imago-Dei-Bridging-Redemption-ebook/dp/B0DSL4DXPF" target="_blank" rel="noopener noreferrer">
+            <strong><em>Rediscovering Imago Dei — Bridging Reason and Redemption</em></strong>
+          </a>, written for skeptics and deep thinkers who wrestle with
           the question of whether God exists. The book explores the fine-tuning of the universe,
           the information encoded in DNA, the connections across world religions, the psychology
           of belief, and the ethical vision of the Sermon on the Mount — weaving together science,
