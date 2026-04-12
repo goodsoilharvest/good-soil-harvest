@@ -33,10 +33,10 @@ export default async function NichePage({
   return (
     <div className="max-w-[var(--max-w-content)] mx-auto px-4 sm:px-6 py-14">
       {/* Niche header */}
-      <div className="mb-12">
+      <div className="mb-12 text-center">
         <span className="text-5xl block mb-4">{niche.icon}</span>
         <h1 className="font-serif text-4xl font-bold text-[var(--foreground)]">{niche.title}</h1>
-        <p className="mt-2 text-lg text-[var(--text-muted)] max-w-xl">{niche.description}</p>
+        <p className="mt-2 text-lg text-[var(--text-muted)] max-w-xl mx-auto">{niche.description}</p>
       </div>
 
       {posts.length === 0 ? (

@@ -151,7 +151,13 @@ export default function AboutPage() {
           </section>
 
           {/* CTA */}
-          <div className="text-center pt-4 pb-8">
+          <div className="text-center pt-4 pb-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/pricing"
+              className="inline-block px-8 py-3.5 rounded-full bg-[var(--color-sage-600)] hover:bg-[var(--color-sage-500)] font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
+            >
+              Get Started
+            </Link>
             <Link
               href="/blog"
               className="inline-block px-8 py-3.5 rounded-full bg-[var(--color-harvest-500)] hover:bg-[var(--color-harvest-400)] font-semibold text-[var(--color-soil-900)] transition-all duration-200 hover:scale-105 hover:shadow-lg"

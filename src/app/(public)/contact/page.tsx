@@ -45,7 +45,7 @@ export default function ContactPage() {
 
   return (
     <div className="max-w-[var(--max-w-prose)] mx-auto px-4 sm:px-6 py-14">
-      <div className="mb-10">
+      <div className="mb-10 text-center">
         <h1 className="font-serif text-4xl font-bold text-[var(--foreground)]">Contact</h1>
         <p className="mt-2 text-[var(--text-muted)]">
           Questions, feedback, or just want to say hello — we&apos;d love to hear from you.

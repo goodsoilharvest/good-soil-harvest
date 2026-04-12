@@ -32,28 +32,18 @@ export default async function HomePage() {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[var(--color-soil-900)] text-white min-h-[92vh] flex flex-col">
+      <section className="relative overflow-hidden text-white min-h-[92vh] flex flex-col">
 
-        {/* Growth ring background */}
-        <div className="absolute inset-0 opacity-[0.06] pointer-events-none select-none" aria-hidden>
-          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <radialGradient id="glow" cx="50%" cy="38%" r="55%">
-                <stop offset="0%" stopColor="#d4af37" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#d4af37" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-            <circle cx="50%" cy="38%" r="15%" fill="none" stroke="#d4af37" strokeWidth="0.6" />
-            <circle cx="50%" cy="38%" r="26%" fill="none" stroke="#82a06a" strokeWidth="0.4" />
-            <circle cx="50%" cy="38%" r="39%" fill="none" stroke="#d4af37" strokeWidth="0.3" />
-            <circle cx="50%" cy="38%" r="54%" fill="none" stroke="#82a06a" strokeWidth="0.25" />
-            <ellipse cx="50%" cy="38%" rx="35%" ry="24%" fill="url(#glow)" />
-          </svg>
-        </div>
+        {/* Parallax tree background */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-fixed"
+          style={{ backgroundImage: "url(https://www.goodsoilharvest.com/api/img/site/hero-tree-1776006148.jpg)" }}
+          aria-hidden
+        />
 
-        {/* Radial warm glow */}
+        {/* Dark overlay for text readability — heavier at bottom to blend into soil */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden
-          style={{ background: "radial-gradient(ellipse 65% 55% at 50% 36%, rgba(191,155,40,0.09) 0%, transparent 70%)" }} />
+          style={{ background: "linear-gradient(to bottom, rgba(30,15,6,0.55) 0%, rgba(30,15,6,0.4) 50%, rgba(30,15,6,0.75) 85%, rgba(46,26,10,0.95) 100%)" }} />
 
         {/* Falling seeds */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
@@ -74,97 +64,102 @@ export default async function HomePage() {
           ))}
         </div>
 
-        {/* Soil strip with wavy edge + sprouts */}
-        <div className="absolute bottom-0 left-0 right-0 pointer-events-none select-none" aria-hidden style={{ height: 140 }}>
-          {/* Wavy soil SVG */}
-          <svg viewBox="0 0 1440 140" preserveAspectRatio="none" width="100%" height="100%"
+        {/* Soil strip with wavy edge + realistic sprouts */}
+        <div className="absolute bottom-0 left-0 right-0 pointer-events-none select-none" aria-hidden style={{ height: 160 }}>
+          {/* Wavy soil — blends with the darkened bottom of the tree image */}
+          <svg viewBox="0 0 1440 160" preserveAspectRatio="none" width="100%" height="100%"
             xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
+            <defs>
+              <linearGradient id="soilGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3a2414" stopOpacity="0.7" />
+                <stop offset="40%" stopColor="#2e1a0a" stopOpacity="0.95" />
+                <stop offset="100%" stopColor="var(--color-soil-800)" stopOpacity="1" />
+              </linearGradient>
+            </defs>
+            {/* Main soil body */}
             <path
-              d="M0,68 C80,48 160,82 240,64 C320,46 400,78 480,60 C560,42 640,72 720,58 C800,44 880,74 960,56 C1040,38 1120,70 1200,54 C1280,38 1360,62 1440,50 L1440,140 L0,140 Z"
-              fill="var(--color-soil-800)"
-              fillOpacity="0.95"
+              d="M0,60 C60,45 120,72 200,55 C280,38 340,68 440,50 C540,32 620,62 720,48 C820,34 900,64 1000,46 C1100,28 1180,58 1280,44 C1360,34 1400,52 1440,42 L1440,160 L0,160 Z"
+              fill="url(#soilGrad)"
             />
-            {/* Roots spreading sideways under soil */}
+            {/* Subtle texture lines in soil */}
+            <path d="M0,90 Q360,82 720,88 Q1080,94 1440,86" fill="none" stroke="#4a2e14" strokeWidth="0.8" opacity="0.4" />
+            <path d="M0,110 Q300,104 600,112 Q900,118 1200,108 Q1380,104 1440,106" fill="none" stroke="#4a2e14" strokeWidth="0.6" opacity="0.3" />
+            {/* Roots spreading from sprout positions */}
             {SPROUTS.map((sp, i) => {
               const x = parseFloat(sp.left) / 100 * 1440;
               return (
-                <g key={i} style={{ transformOrigin: `${x}px 70px` }}>
+                <g key={i}>
                   <path
-                    d={`M${x},68 Q${x - 30},82 ${x - 55},90`}
-                    fill="none" stroke="var(--color-sage-400)" strokeWidth="1.2"
-                    strokeDasharray="60" strokeDashoffset="60"
-                    style={{
-                      animation: `rootSpread 1.4s ${sp.delay} ease-out forwards`,
-                      opacity: 0,
-                    }}
+                    d={`M${x},55 Q${x - 25},72 ${x - 60},85 Q${x - 80},92 ${x - 95},100`}
+                    fill="none" stroke="#5a3e28" strokeWidth="1.5"
+                    strokeDasharray="100" strokeDashoffset="100"
+                    style={{ animation: `rootSpread 2s ${sp.delay} ease-out forwards`, opacity: 0 }}
                   />
                   <path
-                    d={`M${x},68 Q${x + 28},80 ${x + 50},92`}
-                    fill="none" stroke="var(--color-sage-400)" strokeWidth="1"
-                    strokeDasharray="60" strokeDashoffset="60"
-                    style={{
-                      animation: `rootSpread 1.2s calc(${sp.delay} + 0.2s) ease-out forwards`,
-                      opacity: 0,
-                    }}
+                    d={`M${x},55 Q${x + 22},70 ${x + 55},82 Q${x + 75},90 ${x + 90},98`}
+                    fill="none" stroke="#4a3020" strokeWidth="1.2"
+                    strokeDasharray="100" strokeDashoffset="100"
+                    style={{ animation: `rootSpread 1.8s calc(${sp.delay} + 0.3s) ease-out forwards`, opacity: 0 }}
+                  />
+                  {/* Thinner root tendrils */}
+                  <path
+                    d={`M${x - 40},78 Q${x - 55},88 ${x - 70},100`}
+                    fill="none" stroke="#4a3020" strokeWidth="0.7"
+                    strokeDasharray="40" strokeDashoffset="40"
+                    style={{ animation: `rootSpread 1.2s calc(${sp.delay} + 0.8s) ease-out forwards`, opacity: 0 }}
                   />
                 </g>
               );
             })}
           </svg>
 
-          {/* Sprout stems + leaves growing upward */}
-          {SPROUTS.map((sp, i) => (
-            <div
-              key={i}
-              className="absolute"
-              style={{ left: sp.left, bottom: 70, transform: "translateX(-50%)" }}
-            >
-              {/* Stem */}
+          {/* Realistic SVG sprouts growing above the soil line */}
+          {SPROUTS.map((sp, i) => {
+            const heights = [38, 32, 42, 35, 30];
+            const h = heights[i % heights.length];
+            return (
               <div
-                className="mx-auto bg-[var(--color-sage-500)] rounded-full"
-                style={{
-                  width: 2,
-                  height: 28,
+                key={i}
+                className="absolute"
+                style={{ left: sp.left, bottom: 98, transform: "translateX(-50%)" }}
+              >
+                <svg width="40" height={h + 20} viewBox={`0 0 40 ${h + 20}`} style={{
                   transformOrigin: "bottom center",
                   transform: "scaleY(0)",
                   animation: `sproutGrow ${sp.dur} ${sp.delay} ease-out forwards`,
                   opacity: 0,
-                }}
-              />
-              {/* Left leaf */}
-              <div
-                className="absolute"
-                style={{
-                  bottom: 14,
-                  left: -10,
-                  width: 12,
-                  height: 8,
-                  background: "var(--color-sage-400)",
-                  borderRadius: "50% 0 50% 50%",
-                  transformOrigin: "right center",
-                  transform: "scale(0) rotate(-45deg)",
-                  opacity: 0,
-                  animation: `leafUnfurl 1s calc(${sp.delay} + 0.8s) ease-out forwards`,
-                }}
-              />
-              {/* Right leaf */}
-              <div
-                className="absolute"
-                style={{
-                  bottom: 18,
-                  right: -10,
-                  width: 10,
-                  height: 7,
-                  background: "var(--color-sage-500)",
-                  borderRadius: "0 50% 50% 50%",
-                  transformOrigin: "left center",
-                  transform: "scale(0) rotate(45deg)",
-                  opacity: 0,
-                  animation: `leafUnfurl 0.9s calc(${sp.delay} + 1.1s) ease-out forwards`,
-                }}
-              />
-            </div>
-          ))}
+                }}>
+                  {/* Curved stem */}
+                  <path
+                    d={`M20,${h + 18} Q${18 + (i % 2 ? 3 : -3)},${h * 0.6} 20,4`}
+                    fill="none" stroke="#4f6640" strokeWidth="2.5" strokeLinecap="round"
+                  />
+                  {/* Left leaf — teardrop shape */}
+                  <ellipse cx="11" cy={h * 0.35} rx="8" ry="5"
+                    transform={`rotate(-35 11 ${h * 0.35})`}
+                    fill="#637f52" opacity="0.9"
+                  />
+                  <path
+                    d={`M11,${h * 0.35 - 4} Q11,${h * 0.35} 11,${h * 0.35 + 4}`}
+                    fill="none" stroke="#82a06a" strokeWidth="0.6" opacity="0.6"
+                  />
+                  {/* Right leaf — slightly different angle */}
+                  <ellipse cx="29" cy={h * 0.5} rx="7" ry="4.5"
+                    transform={`rotate(30 29 ${h * 0.5})`}
+                    fill="#4f6640" opacity="0.85"
+                  />
+                  <path
+                    d={`M29,${h * 0.5 - 3.5} Q29,${h * 0.5} 29,${h * 0.5 + 3.5}`}
+                    fill="none" stroke="#82a06a" strokeWidth="0.5" opacity="0.5"
+                  />
+                  {/* Top bud / unfurling leaf */}
+                  <ellipse cx="20" cy="6" rx="4" ry="6"
+                    fill="#82a06a" opacity="0.9"
+                  />
+                </svg>
+              </div>
+            );
+          })}
         </div>
 
         {/* Hero content */}

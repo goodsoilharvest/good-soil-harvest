@@ -29,7 +29,7 @@ export default async function BlogPage() {
 
   return (
     <div className="max-w-[var(--max-w-content)] mx-auto px-4 sm:px-6 py-14">
-      <div className="mb-10">
+      <div className="mb-10 text-center">
         <h1 className="font-serif text-4xl font-bold text-[var(--foreground)]">All Posts</h1>
         <p className="mt-2 text-[var(--text-muted)]">
           Faith, finance, psychology, philosophy, and science.
