@@ -121,9 +121,18 @@ export function Header() {
           </button>
         </div>
 
+        {/* Mobile menu backdrop — tap outside to close */}
+        {menuOpen && (
+          <div
+            className="fixed inset-0 top-16 z-40 md:hidden"
+            onClick={() => setMenuOpen(false)}
+            aria-hidden
+          />
+        )}
+
         {/* Mobile menu */}
         {menuOpen && (
-          <nav className="md:hidden py-3 border-t border-white/10 flex flex-col gap-1">
+          <nav className="md:hidden py-3 border-t border-white/10 flex flex-col gap-1 relative z-50">
             {isAuthed && (
               <Link
                 href="/dashboard"
