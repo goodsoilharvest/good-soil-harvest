@@ -326,7 +326,7 @@ export default async function HomePage() {
                   ))}
                 </div>
                 <div className="px-6 pb-5 text-center">
-                  <p className="text-xs text-white/30 italic">Video preview coming soon</p>
+                  <p className="text-xs text-white/30 italic">Sign up to see your personalized feed in action</p>
                 </div>
               </div>
             </RevealOnScroll>
@@ -377,7 +377,7 @@ export default async function HomePage() {
                   <p className="font-serif text-3xl font-bold text-white mb-1">$9.99<span className="text-lg font-normal text-white/50">/mo</span></p>
                   <p className="text-white/40 text-sm mb-6">7-day free trial</p>
                   <ul className="space-y-2.5 text-sm text-white/70 flex-1 mb-8">
-                    {["Everything in Seedling", "Exclusive Deep Roots posts", "Early access to new content", "More perks coming soon"].map(f => (
+                    {["Everything in Seedling", "Exclusive Deep Roots posts", "AI-powered search", "Early access to new features"].map(f => (
                       <li key={f} className="flex items-start gap-2"><span className="text-[var(--color-sage-400)] mt-0.5">✓</span>{f}</li>
                     ))}
                   </ul>
