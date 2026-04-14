@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { notifyNewPosts } from "@/lib/push";
 
 export async function PATCH(
   req: NextRequest,
@@ -60,6 +61,12 @@ export async function PATCH(
       },
     }),
   ]);
+
+  // Fire push notifications for subscribers who opted into this niche.
+  // Non-blocking — don't hold up the admin response if notifications fail.
+  notifyNewPosts({
+    posts: [{ title, niche: draft.niche, slug: uniqueSlug }],
+  }).catch((err) => console.error("[drafts/approve] push notify failed:", err));
 
   return NextResponse.json({ ok: true });
 }
