@@ -32,6 +32,10 @@ export function AdUnit({ slot, format = "auto", className = "" }: AdUnitProps) {
 
   if (!publisherId) return null;
 
+  // Validate slot is numeric only to prevent attribute injection
+  const safeSlot = /^\d+$/.test(slot) ? slot : null;
+  if (!safeSlot && slot !== "auto") return null;
+
   return (
     <div className={`my-8 text-center ${className}`}>
       <p className="text-xs text-[var(--text-muted)] mb-2">Advertisement</p>
@@ -40,7 +44,7 @@ export function AdUnit({ slot, format = "auto", className = "" }: AdUnitProps) {
         className="adsbygoogle"
         style={{ display: "block" }}
         data-ad-client={publisherId}
-        data-ad-slot={slot}
+        data-ad-slot={safeSlot ?? slot}
         data-ad-format={format}
         data-full-width-responsive="true"
       />

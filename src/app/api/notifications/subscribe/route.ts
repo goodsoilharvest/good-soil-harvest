@@ -19,6 +19,12 @@ export async function POST(req: NextRequest) {
 
   const nicheStr = Array.isArray(niches) ? niches.join(",") : "";
 
+  // Prevent cross-user hijacking: only upsert if this endpoint belongs to
+  // the current user OR doesn't exist yet. Delete any stale record first.
+  await prisma.pushSubscription.deleteMany({
+    where: { endpoint, userId: { not: session.user.id } },
+  });
+
   await prisma.pushSubscription.upsert({
     where: { endpoint },
     create: {
@@ -30,7 +36,6 @@ export async function POST(req: NextRequest) {
       emailDigest: emailDigest ?? false,
     },
     update: {
-      userId: session.user.id,
       p256dh,
       auth: authKey,
       niches: nicheStr,

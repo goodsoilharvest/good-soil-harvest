@@ -62,12 +62,15 @@ self.addEventListener("notificationclick", (event) => {
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clients) => {
-        // Focus an existing window if possible
+        // Focus an existing window if possible (exact hostname match)
         for (const client of clients) {
-          if (client.url.includes("goodsoilharvest.com") && "focus" in client) {
-            client.navigate(url);
-            return client.focus();
-          }
+          try {
+            const hostname = new URL(client.url).hostname;
+            if ((hostname === "www.goodsoilharvest.com" || hostname === "goodsoilharvest.com") && "focus" in client) {
+              client.navigate(url);
+              return client.focus();
+            }
+          } catch { /* invalid URL — skip */ }
         }
         return self.clients.openWindow(url);
       })

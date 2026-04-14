@@ -62,7 +62,9 @@ export async function notifyNewPosts({ posts }: NotifyNewPostsOpts) {
     } catch (err: unknown) {
       // 410 Gone = subscription expired, clean it up
       if (err && typeof err === "object" && "statusCode" in err && (err as { statusCode: number }).statusCode === 410) {
-        await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+        await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch((e) =>
+          console.error(`[push] failed to cleanup expired sub ${sub.id}:`, e)
+        );
       } else {
         console.error(`[push] failed for sub ${sub.id}:`, err);
       }
