@@ -8,6 +8,7 @@ import rehypeSlug from "rehype-slug";
 import { auth } from "@/auth";
 import type { Metadata } from "next";
 import { LikeButton } from "@/components/LikeButton";
+import { BlogAd } from "@/components/ads/BlogAd";
 import Image from "next/image";
 
 const nicheMap = Object.fromEntries(niches.map((n) => [n.slug, n]));
@@ -201,6 +202,9 @@ export default async function PostPage({
         }}
       />
 
+      {/* Ad — free articles only, non-subscribers only */}
+      <BlogAd show={!post.isPremium && !post.isDeepRoots && viewerPlan === "FREE"} />
+
       {/* Content or paywall */}
       {accessGranted ? (
         <>
@@ -215,6 +219,9 @@ export default async function PostPage({
               }}
             />
           </article>
+
+          {/* Bottom ad — free articles, non-subscribers */}
+          <BlogAd show={!post.isPremium && !post.isDeepRoots && viewerPlan === "FREE"} />
 
           {post.references && (
             <div className="mt-10 pt-8 border-t border-[var(--border)]">

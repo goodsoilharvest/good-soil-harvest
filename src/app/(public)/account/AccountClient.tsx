@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import { InstallApp } from "@/components/pwa/InstallApp";
+import { NotificationPrefs } from "@/components/pwa/NotificationPrefs";
 
 type Props = {
   userId: string;
@@ -634,6 +636,14 @@ function AccountContent({ userId, email, memberSince, plan, status, currentPerio
           </button>
         </div>
       )}
+
+      {/* App & Notifications */}
+      <Section title="App & Notifications">
+        <div className="space-y-4">
+          <InstallApp />
+          <NotificationPrefs />
+        </div>
+      </Section>
 
       {/* Account dropdown */}
       <Section title="More">

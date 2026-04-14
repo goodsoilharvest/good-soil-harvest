@@ -26,6 +26,7 @@ model User {
   postViews       PostView[]
   aiSearchLogs    AiSearchLog[]
   feedback        Feedback[]
+  pushSubscriptions PushSubscription[]
 }
 
 model Session {
@@ -231,6 +232,24 @@ model WebhookEvent {
   eventType     String
   processedAt   DateTime @default(now())
   @@index([processedAt])
+}
+
+// ─── Push Notification Subscriptions ─────────────────────────────────────────
+// Stores Web Push subscriptions and per-user topic notification preferences.
+// Each browser/device gets its own subscription record.
+model PushSubscription {
+  id          String   @id @default(cuid())
+  userId      String
+  endpoint    String   @unique // Web Push endpoint URL — unique per device
+  p256dh      String   // Public key for push encryption
+  auth        String   // Auth secret for push encryption
+  // Comma-separated niche slugs the user wants notifications for.
+  // Empty string = subscribed to push but no topic notifications.
+  niches      String   @default("")
+  emailDigest Boolean  @default(false) // Also receive daily email digest
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
 }
 
 // ─── AI Usage Logging ────────────────────────────────────────────────────────
