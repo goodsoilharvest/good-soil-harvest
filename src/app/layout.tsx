@@ -57,6 +57,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${lora.variable} ${inter.variable}`}>
       <head>
+        <meta name="google-site-verification" content="pBapuREGkfUODrGjct6ajmIx36u8c8GpyDy3FumjoVQ" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         {process.env.NEXT_PUBLIC_ADSENSE_ID && (
           <script
