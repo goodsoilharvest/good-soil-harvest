@@ -1,9 +1,64 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { niches } from "@/lib/config";
+
+type FeedTier = "all" | "free" | "premium" | "deep-roots";
+type FeedSort = "newest" | "oldest";
+
+function usePostFilters(posts: Post[]) {
+  const [category, setCategory] = useState("all");
+  const [tier, setTier] = useState<FeedTier>("all");
+  const [sort, setSort] = useState<FeedSort>("newest");
+
+  const filtered = useMemo(() => {
+    let result = posts;
+    if (category !== "all") result = result.filter(p => p.niche === category);
+    if (tier === "free") result = result.filter(p => !p.isPremium && !p.isDeepRoots);
+    else if (tier === "premium") result = result.filter(p => p.isPremium && !p.isDeepRoots);
+    else if (tier === "deep-roots") result = result.filter(p => p.isDeepRoots);
+    return [...result].sort((a, b) => {
+      const at = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const bt = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      return sort === "newest" ? bt - at : at - bt;
+    });
+  }, [posts, category, tier, sort]);
+
+  return { category, setCategory, tier, setTier, sort, setSort, filtered };
+}
+
+function FeedFilters({ category, setCategory, tier, setTier, sort, setSort, count }: {
+  category: string; setCategory: (v: string) => void;
+  tier: FeedTier; setTier: (v: FeedTier) => void;
+  sort: FeedSort; setSort: (v: FeedSort) => void;
+  count: number;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 mb-5">
+      <select value={category} onChange={e => setCategory(e.target.value)}
+        className="px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-xs text-[var(--foreground)] focus:outline-none focus:border-[var(--color-sage-400)]">
+        <option value="all">All Topics</option>
+        {niches.map(n => <option key={n.slug} value={n.slug}>{n.icon} {n.title}</option>)}
+      </select>
+      <select value={tier} onChange={e => setTier(e.target.value as FeedTier)}
+        className="px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-xs text-[var(--foreground)] focus:outline-none focus:border-[var(--color-sage-400)]">
+        <option value="all">All Tiers</option>
+        <option value="free">Free</option>
+        <option value="premium">🌱 Seedling</option>
+        <option value="deep-roots">🌾 Deep Roots</option>
+      </select>
+      <select value={sort} onChange={e => setSort(e.target.value as FeedSort)}
+        className="px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-xs text-[var(--foreground)] focus:outline-none focus:border-[var(--color-sage-400)]">
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
+      </select>
+      <span className="text-xs text-[var(--text-muted)] ml-auto">{count} article{count !== 1 ? "s" : ""}</span>
+    </div>
+  );
+}
 
 type Post = {
   id: string;
@@ -48,6 +103,26 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 function isNew(publishedAt: Date | null): boolean {
   if (!publishedAt) return false;
   return Date.now() - new Date(publishedAt).getTime() < SEVEN_DAYS_MS;
+}
+
+function FilteredPostGrid({ posts }: { posts: Post[] }) {
+  const f = usePostFilters(posts);
+  return (
+    <>
+      <FeedFilters {...f} count={f.filtered.length} />
+      {f.filtered.length === 0 ? (
+        <div className="text-center py-10">
+          <p className="text-[var(--text-muted)] text-sm">No articles match these filters.</p>
+          <button onClick={() => { f.setCategory("all"); f.setTier("all"); f.setSort("newest"); }}
+            className="mt-2 text-xs text-[var(--color-sage-600)] hover:underline">Clear filters</button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {f.filtered.map(p => <PostCard key={p.id} post={p} />)}
+        </div>
+      )}
+    </>
+  );
 }
 
 function PostCard({ post }: { post: Post }) {
@@ -544,9 +619,7 @@ function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, like
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {tabPosts.map(p => <PostCard key={p.id} post={p} />)}
-          </div>
+          <FilteredPostGrid posts={tabPosts} />
         )
       )}
 
@@ -557,9 +630,7 @@ function DashboardContent({ userId, plan, isPaid, isDeepRoots, suggestions, like
 
       {/* Browse all (free + Seedling users, not on Discover tab) */}
       {!showSearch && !isDeepRoots && tab !== "Discover" && !isPaid && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {browse.map(p => <PostCard key={p.id} post={p} />)}
-        </div>
+        <FilteredPostGrid posts={browse} />
       )}
     </div>
   );

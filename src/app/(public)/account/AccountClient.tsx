@@ -162,7 +162,7 @@ function AccountDropdown({ isAdmin = false, isPaid = false }: { isAdmin?: boolea
           )}
           <div className="border-t border-[var(--border)] my-1" />
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => signOut({ callbackUrl: "/sign-in" })}
             className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left"
           >
             ↩ Sign out
