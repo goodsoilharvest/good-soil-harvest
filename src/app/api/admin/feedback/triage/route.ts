@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { sendFeedbackAlert } from "@/lib/email";
 
 // On-demand AI triage of un-triaged feedback. Called when admin opens
 // the feedback page. Uses Haiku for cost-efficient summarization.
@@ -117,6 +118,22 @@ Output ONLY a JSON array of objects in order, one per item. No prose, no markdow
       });
     })
   );
+
+  // Email alert for CRITICAL or HIGH items
+  const urgent = parsed
+    .map((t, i) => ({ ...t, ...untriaged[i] }))
+    .filter(t => t.priority === "CRITICAL" || t.priority === "HIGH");
+  if (urgent.length > 0) {
+    sendFeedbackAlert(
+      urgent.map(u => ({
+        summary: u.summary?.slice(0, 200) ?? "No summary",
+        priority: u.priority,
+        email: u.email,
+        message: u.message,
+        pageUrl: u.pageUrl,
+      }))
+    ).catch(err => console.error("[feedback/triage] alert email failed:", err));
+  }
 
   return NextResponse.json({ triaged: untriaged.length });
 }

@@ -9,6 +9,7 @@ import { auth } from "@/auth";
 import type { Metadata } from "next";
 import { LikeButton } from "@/components/LikeButton";
 import { BlogAd } from "@/components/ads/BlogAd";
+import { ReadingProgress } from "@/components/ReadingProgress";
 import Image from "next/image";
 
 const nicheMap = Object.fromEntries(niches.map((n) => [n.slug, n]));
@@ -108,7 +109,17 @@ export default async function PostPage({
     isLiked = !!like;
   }
 
+  // Related posts — same niche, different post, max 3
+  const relatedPosts = await prisma.post.findMany({
+    where: { niche: post.niche, status: "PUBLISHED", id: { not: post.id } },
+    orderBy: { publishedAt: "desc" },
+    take: 3,
+    select: { slug: true, title: true, description: true, featuredImage: true, niche: true, isPremium: true, isDeepRoots: true },
+  });
+
   return (
+    <>
+    <ReadingProgress />
     <div className="max-w-[var(--max-w-prose)] mx-auto px-4 sm:px-6 py-14">
       {/* Back to feed (signed-in) or breadcrumb (signed-out) */}
       {userId ? (
@@ -247,7 +258,39 @@ export default async function PostPage({
       ) : (
         <Paywall isDeepRoots={post.isDeepRoots} viewerPlan={viewerPlan} />
       )}
+
+      {/* Related posts */}
+      {relatedPosts.length > 0 && (
+        <div className="mt-14 pt-10 border-t border-[var(--border)]">
+          <h2 className="font-serif text-xl font-bold text-[var(--foreground)] mb-6 text-center">More in {niche?.title ?? post.niche}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {relatedPosts.map((rp) => (
+              <Link
+                key={rp.slug}
+                href={`/blog/${rp.slug}`}
+                className="group rounded-xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden hover:border-[var(--color-sage-400)] transition-colors"
+              >
+                {rp.featuredImage && (
+                  <div className="relative w-full h-28 overflow-hidden">
+                    <Image src={rp.featuredImage} alt={rp.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 640px) 100vw, 33vw" />
+                  </div>
+                )}
+                <div className="p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    {rp.isDeepRoots && <span className="text-[10px] font-semibold text-[var(--color-harvest-600)]">🌾 Deep Roots</span>}
+                    {rp.isPremium && !rp.isDeepRoots && <span className="text-[10px] font-semibold text-[var(--color-sage-600)]">🌱 Premium</span>}
+                  </div>
+                  <p className="text-sm font-serif font-bold text-[var(--foreground)] leading-snug group-hover:text-[var(--color-sage-600)] transition-colors line-clamp-2">
+                    {rp.title}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
+    </>
   );
 }
 
