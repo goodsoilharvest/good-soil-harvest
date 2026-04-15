@@ -230,3 +230,16 @@ h1, h2, h3, h4 { font-family: var(--font-serif); }
 .reveal.delay-2 { transition-delay: 200ms; }
 .reveal.delay-3 { transition-delay: 300ms; }
 .reveal.delay-4 { transition-delay: 400ms; }
+
+/* ── PWA standalone mode ─────────────────────────────── */
+@media (display-mode: standalone) {
+  /* Slim header: hide desktop nav, keep logo only */
+  header nav.hidden.md\:flex { display: none !important; }
+  header button[aria-label="Toggle menu"] { display: none !important; }
+
+  /* Bottom padding so content doesn't hide behind bottom nav */
+  body { padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)); }
+
+  /* Hide footer in PWA — bottom nav replaces it */
+  footer { display: none; }
+}

@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/lib/config";
 import { Providers } from "@/components/Providers";
 import { StripeSandboxBanner } from "@/components/layout/StripeSandboxBanner";
+import { BottomNav } from "@/components/pwa/BottomNav";
 import "./globals.css";
 
 const lora = Lora({
@@ -69,7 +70,10 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col">
         {process.env.NEXT_PUBLIC_STRIPE_SANDBOX === "true" && <StripeSandboxBanner />}
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <BottomNav />
+        </Providers>
         <Analytics />
       </body>
     </html>
