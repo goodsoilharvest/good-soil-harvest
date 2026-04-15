@@ -25,8 +25,8 @@ export function Header() {
     <header className="bg-[var(--color-soil-800)] text-white sticky top-0 z-50 shadow-md">
       <div className="max-w-[var(--max-w-content)] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href={logoHref} className="flex items-center gap-2 shrink-0">
+          {/* Logo — centered in PWA standalone mode via CSS */}
+          <Link href={logoHref} className="flex items-center gap-2 shrink-0 pwa-logo">
             <span className="text-[var(--color-harvest-400)] text-2xl">🌱</span>
             <span className="font-serif font-bold text-lg leading-tight">
               Good Soil{" "}

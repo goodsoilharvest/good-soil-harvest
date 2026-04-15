@@ -237,6 +237,10 @@ h1, h2, h3, h4 { font-family: var(--font-serif); }
   header nav.hidden.md\:flex { display: none !important; }
   header button[aria-label="Toggle menu"] { display: none !important; }
 
+  /* Center the logo */
+  header > div > div { justify-content: center; }
+  .pwa-logo { margin: 0 auto; }
+
   /* Bottom padding so content doesn't hide behind bottom nav */
   body { padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)); }
 
