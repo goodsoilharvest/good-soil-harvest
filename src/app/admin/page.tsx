@@ -51,6 +51,18 @@ export default async function AdminDashboard() {
           >
             Write New Post
           </Link>
+          <Link
+            href="/admin/feedback"
+            className="px-4 py-2 rounded-lg border border-white/20 text-white/80 text-sm font-semibold hover:bg-white/10 transition-colors"
+          >
+            Feedback
+          </Link>
+          <Link
+            href="/admin/settings"
+            className="px-4 py-2 rounded-lg border border-white/20 text-white/80 text-sm font-semibold hover:bg-white/10 transition-colors"
+          >
+            Settings
+          </Link>
         </div>
       </div>
     </>
