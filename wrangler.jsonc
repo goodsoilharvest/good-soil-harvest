@@ -1,0 +1,25 @@
+/**
+ * wrangler.jsonc — Cloudflare Workers deploy config for Good Soil Harvest
+ *
+ * Built via @opennextjs/cloudflare which adapts Next.js to run on Workers
+ * with Node compat enabled (so we don't have to rewrite every API route to
+ * the edge runtime). Output goes to .open-next/ which is what we deploy.
+ *
+ * Phase 1: hosting on Cloudflare, DB still on Neon. Set DATABASE_URL +
+ * other env vars via `wrangler secret put` once the project exists, OR via
+ * the dashboard. See docs/CLOUDFLARE_MIGRATION.md.
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "goodsoilharvest",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-04-25",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
