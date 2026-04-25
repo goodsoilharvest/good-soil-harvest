@@ -183,3 +183,77 @@ Questions to answer:
 1. Are there any Vercel-specific features the site relies on that I haven't accounted for? (Vercel Speed Insights, Vercel Cron Jobs, etc.)
 2. Are there any post-IDs or URLs already published/indexed that would break with a DB migration? (Usually no — slug-based URLs survive; only internal IDs matter)
 3. Timeline: which weekend works? Target a stretch with no other launches planned.
+
+---
+
+## Phase 1 progress log
+
+**Date:** 2026-04-25
+**Branch:** `cf-pages-migration`
+**Commit:** "Cloudflare Phase 1: hosting scaffold via OpenNext"
+
+### Completed
+
+- ✅ Bumped Next.js to 16.2.4 (16.2.3+ required by OpenNext)
+- ✅ Installed `@opennextjs/cloudflare` 1.19.4
+- ✅ `wrangler.jsonc` with `nodejs_compat` (avoids the per-route edge runtime rabbit hole)
+- ✅ `open-next.config.ts` (defaults; can wire R2/KV later)
+- ✅ npm scripts: `cf:build`, `cf:preview`, `cf:deploy`, `cf:typegen`
+- ✅ Lazy Resend init (was throwing at build's "collect page data" pass)
+- ✅ NextAuth v5 split (`auth.config.ts` edge-safe / `auth.ts` full)
+- ✅ Deleted `src/proxy.ts` — Next 16 makes proxy always Node-runtime, which OpenNext-CF doesn't yet support. `src/app/admin/layout.tsx` already gates `/admin/*` server-side via `auth()` + `redirect("/admin-login")`, so no security regression.
+- ✅ `npm run cf:build` succeeds locally (emits `.open-next/worker.js`)
+
+### Chris's manual next steps to deploy preview
+
+1. **Create Workers project** (one-time) — easiest via CLI:
+   ```bash
+   cd /Users/chris/Documents/projects/good-soil-harvest
+   # Source CF creds (the personal account, where Compass + your other
+   # workers live — verify this is where you want goodsoilharvest)
+   set -a; source /Users/chris/scripts/cloudflare.env; set +a
+   export CLOUDFLARE_API_TOKEN="$CLOUDFLARE_API_TOKEN_PERSONAL"
+   export CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID_PERSONAL"
+   npm run cf:deploy
+   ```
+   First deploy will create the worker `goodsoilharvest` and assign a `*.workers.dev` URL.
+
+2. **Set runtime secrets** (one-time, all from terminal):
+   ```bash
+   npx wrangler secret put DATABASE_URL                 # Neon connection string
+   npx wrangler secret put NEXTAUTH_SECRET              # generate via `openssl rand -base64 32`
+   npx wrangler secret put NEXTAUTH_URL                 # https://goodsoilharvest.com
+   npx wrangler secret put RESEND_API_KEY               # already have it
+   npx wrangler secret put STRIPE_SECRET_KEY            # already have it
+   npx wrangler secret put STRIPE_WEBHOOK_SECRET        # already have it
+   npx wrangler secret put VAPID_PRIVATE_KEY            # if push notifications enabled
+   npx wrangler secret put NEXT_PUBLIC_VAPID_PUBLIC_KEY # public; can be in [vars] instead
+   # Plus any other env vars from your current Vercel env list
+   ```
+   Pull the full env list from Vercel dashboard → Settings → Environment Variables.
+
+3. **Smoke test** the `*.workers.dev` URL on phone + desktop:
+   - [ ] Home page loads
+   - [ ] Blog post loads + images
+   - [ ] Sign in flow (magic link → verify code → session cookie)
+   - [ ] /admin gates correctly (redirects when unauthed)
+   - [ ] Stripe checkout (test mode)
+   - [ ] Push notification subscribe (if applicable)
+   - [ ] /api/og social preview generates
+
+4. **DNS cutover** — only after smoke test passes:
+   - Cloudflare DNS: change A/CNAME for `goodsoilharvest.com` from Vercel target → Workers (`goodsoilharvest.<account>.workers.dev` or use a custom domain on the worker via dashboard).
+   - Keep Vercel project alive 7 days as rollback.
+   - Monitor logs: `wrangler tail`
+
+### Known caveats heading into deploy
+
+- **Push notifications (`web-push` package)**: still uses Node crypto. Will likely throw on edge in any code path that calls it. If it does break, port to Web Crypto using Maximus's pattern (~2-3 hrs). Not a blocker for the marketing site shell — only affects users who have notifications enabled.
+- **Image optimization (`next/image`)**: should work via OpenNext but un-tested. Watch for blob-url failures from Vercel Blob source. Phase 3 swaps to R2.
+- **TypeScript duplicate-key warning** for `providers` in the auth bundle: cosmetic; runtime behavior is correct (last `providers` wins).
+
+### Next phases (separate weekends)
+
+- **Phase 2** — Neon → CF D1: ~10-14 hrs. Schema port (Postgres → SQLite), data migration, swap Prisma adapter or drop Prisma in favor of raw D1 queries.
+- **Phase 3** — Vercel Blob → CF R2: ~3-4 hrs. R2 has zero egress fees; this is the biggest cost saver.
+
