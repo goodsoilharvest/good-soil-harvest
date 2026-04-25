@@ -3,8 +3,14 @@ import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
+import authConfig from "./auth.config";
 
+// auth.ts: full NextAuth setup with Prisma + bcrypt. Used by API routes,
+// server components, and the auth handlers. The proxy/middleware runs on
+// the edge runtime and uses auth.config directly to avoid pulling in this
+// module's DB dependencies.
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -77,46 +83,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    jwt({ token, user }) {
-      if (user) {
-        // token.sub is automatically set to user.id by NextAuth
-        const u = user as { role?: string; subscriptionPlan?: string | null; subscriptionStatus?: string | null };
-        token.role = u.role;
-        token.subscriptionPlan = u.subscriptionPlan ?? null;
-        token.subscriptionStatus = u.subscriptionStatus ?? null;
-      }
-      return token;
-    },
-    session({ session, token }) {
-      // token.sub holds the user id (set automatically by NextAuth)
-      if (token.sub) session.user.id = token.sub;
-      if (token.role) session.user.role = token.role as string;
-      session.user.subscriptionPlan = (token.subscriptionPlan as string | null) ?? null;
-      session.user.subscriptionStatus = (token.subscriptionStatus as string | null) ?? null;
-      return session;
-    },
-  },
-  pages: {
-    signIn: "/admin-login",
-  },
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60,   // Refresh the JWT every 24h
-  },
-  cookies: {
-    sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token"
-          : "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-  },
+  // pages, session, cookies, callbacks all live in auth.config.ts via the
+  // ...authConfig spread above.
 });

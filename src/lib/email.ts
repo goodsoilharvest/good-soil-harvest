@@ -1,6 +1,22 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy singleton — avoids throwing at module-load time during the build's
+// "collect page data" pass, when env vars aren't injected. Matches the
+// Stripe pattern in lib/stripe.ts.
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    const key = process.env.RESEND_API_KEY;
+    if (!key) throw new Error("RESEND_API_KEY is not set");
+    _resend = new Resend(key);
+  }
+  return _resend;
+}
+const resend = {
+  emails: {
+    send: (...args: Parameters<Resend["emails"]["send"]>) => getResend().emails.send(...args),
+  },
+};
 
 const FROM = process.env.RESEND_FROM_EMAIL ?? "Good Soil Harvest <noreply@goodsoilharvest.com>";
 const SITE = process.env.NEXTAUTH_URL ?? "https://goodsoilharvest.com";
