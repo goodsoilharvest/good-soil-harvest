@@ -69,7 +69,7 @@ export default function RootLayout({
         )}
       </head>
       <body className="min-h-screen flex flex-col">
-        {process.env.NEXT_PUBLIC_STRIPE_SANDBOX === "true" && <StripeSandboxBanner />}
+        {process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_") && <StripeSandboxBanner />}
         <Providers>
           {children}
           <BottomNav />
