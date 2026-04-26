@@ -68,6 +68,34 @@ export async function POST(req: NextRequest) {
       const periodEndISO = periodEndISOFromSub(stripeSub);
       const trialEndISO = stripeSub.trial_end ? new Date(stripeSub.trial_end * 1000).toISOString().replace("T", " ").slice(0, 19) : null;
 
+      // Pin the customer's default PM to the one that actually paid for this
+      // session. Defends against Link / portal drift where the customer's
+      // invoice_settings.default_payment_method points at a stale card.
+      try {
+        const piId = typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent?.id;
+        let pmId: string | null = null;
+        if (piId) {
+          const pi = await stripe.paymentIntents.retrieve(piId);
+          pmId = typeof pi.payment_method === "string" ? pi.payment_method : pi.payment_method?.id ?? null;
+        }
+        if (!pmId) {
+          const subPm = stripeSub.default_payment_method;
+          pmId = typeof subPm === "string" ? subPm : subPm?.id ?? null;
+        }
+        if (pmId) {
+          await stripe.customers.update(customerId, {
+            invoice_settings: { default_payment_method: pmId },
+          });
+          await stripe.subscriptions.update(subscriptionId, {
+            default_payment_method: pmId,
+          });
+        }
+      } catch (err) {
+        console.warn("[webhooks/stripe] default PM sync failed:", err);
+      }
+
       await dbRun(
         `INSERT INTO subscriptions
            (id, user_id, stripe_customer_id, stripe_subscription_id, status, plan, current_period_end, trial_end, created_at, updated_at)

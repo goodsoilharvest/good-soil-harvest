@@ -6,7 +6,10 @@ export function getStripe(): Stripe {
   if (!_stripe) {
     const key = process.env.STRIPE_SECRET_KEY;
     if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-    _stripe = new Stripe(key, { apiVersion: "2025-03-31.basil" });
+    _stripe = new Stripe(key, {
+      apiVersion: "2025-03-31.basil",
+      httpClient: Stripe.createFetchHttpClient(),
+    });
   }
   return _stripe;
 }
