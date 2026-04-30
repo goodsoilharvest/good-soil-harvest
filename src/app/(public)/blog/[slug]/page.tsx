@@ -23,9 +23,12 @@ function hydratePost(r: PostRow) {
 }
 import { niches } from "@/lib/config";
 import Link from "next/link";
-import { MDXRemote } from "next-mdx-remote/rsc";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
+import remarkRehype from "remark-rehype";
 import rehypeSlug from "rehype-slug";
+import rehypeStringify from "rehype-stringify";
 import { auth } from "@/auth";
 import type { Metadata } from "next";
 import { LikeButton } from "@/components/LikeButton";
@@ -34,6 +37,19 @@ import { ReadingProgress } from "@/components/ReadingProgress";
 import Image from "next/image";
 
 const nicheMap = Object.fromEntries(niches.map((n) => [n.slug, n]));
+
+// Render markdown to HTML via unified (remark + rehype). No runtime code
+// generation — required because Cloudflare Workers blocks new Function/eval.
+async function renderMarkdown(source: string): Promise<string> {
+  const file = await unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkRehype)
+    .use(rehypeSlug)
+    .use(rehypeStringify)
+    .process(source);
+  return String(file);
+}
 
 const SITE = process.env.NEXTAUTH_URL ?? "https://goodsoilharvest.com";
 
@@ -260,17 +276,10 @@ export default async function PostPage({
       {/* Content or paywall */}
       {accessGranted ? (
         <>
-          <article className="prose text-[var(--foreground)]">
-            <MDXRemote
-              source={post.content}
-              options={{
-                mdxOptions: {
-                  remarkPlugins: [remarkGfm],
-                  rehypePlugins: [rehypeSlug],
-                },
-              }}
-            />
-          </article>
+          <article
+            className="prose text-[var(--foreground)]"
+            dangerouslySetInnerHTML={{ __html: await renderMarkdown(post.content) }}
+          />
 
           {/* Bottom ad — free articles, non-subscribers */}
           <BlogAd show={!post.isPremium && !post.isDeepRoots && viewerPlan === "FREE"} />
