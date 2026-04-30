@@ -36,7 +36,9 @@ export default function PrivacyPage() {
           <li><strong>Saved articles</strong> — articles you bookmark with the like button.</li>
           <li><strong>Content preferences</strong> — the topics you engage with most, derived from your reading and saving activity and used by our recommendation algorithm.</li>
           <li><strong>Session cookie</strong> — a secure, encrypted cookie that keeps you logged in. It does not track you across other websites.</li>
-          <li><strong>Basic technical data</strong> — IP address, browser type, and referring URL, collected by our hosting provider (Vercel) for security and performance purposes only.</li>
+          <li><strong>Basic technical data</strong> — IP address, browser type, and referring URL, collected by our hosting provider (Cloudflare) for security and performance purposes only.</li>
+          <li><strong>Aggregate page analytics</strong> — anonymous page-view counts and referrer data via Cloudflare Web Analytics. No tracking cookies, no cross-site tracking, no fingerprinting.</li>
+          <li><strong>Advertising data</strong> — on free articles, Google AdSense may set cookies and collect data to serve and measure ads. Premium and Deep Roots subscribers see no ads. See &ldquo;Third-Party Service Providers&rdquo; below for details.</li>
         </ul>
 
         <h3>Payment Information</h3>
@@ -91,16 +93,19 @@ export default function PrivacyPage() {
           transmitted to our servers.
         </p>
         <p>
-          We do not use advertising cookies, tracking pixels, or third-party analytics scripts.
+          On free articles, Google AdSense may set advertising cookies. Premium and Deep Roots
+          subscribers do not see ads and are not subjected to advertising cookies on this Site.
+          We do not use tracking pixels or analytics scripts beyond the privacy-respecting
+          Cloudflare Web Analytics described above.
         </p>
 
         <h2>5. Third-Party Service Providers</h2>
         <ul>
-          <li><strong>Vercel</strong> — website hosting and edge delivery. May log IP addresses and request metadata for performance and security.</li>
-          <li><strong>Neon</strong> — serverless PostgreSQL database. Your account data, subscription status, and reading history are stored here.</li>
+          <li><strong>Cloudflare</strong> — website hosting (Workers), database (D1), and Web Analytics. May log IP addresses and request metadata for performance, security, and aggregate analytics.</li>
           <li><strong>Stripe</strong> — payment processing under PCI-DSS compliance.</li>
           <li><strong>Resend</strong> — transactional email delivery. Your email address is transmitted to Resend to deliver verification and account emails.</li>
           <li><strong>Anthropic</strong> — AI language model processing for the Deep Roots AI search feature.</li>
+          <li><strong>Google AdSense</strong> — serves contextual advertising on free articles. AdSense may use cookies and collect data per <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">Google&rsquo;s advertising policy</a>.</li>
         </ul>
 
         <h2>6. AI-Generated Content</h2>

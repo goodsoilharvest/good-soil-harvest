@@ -28,6 +28,7 @@ import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import remarkRehype from "remark-rehype";
 import rehypeSlug from "rehype-slug";
+import rehypeSanitize from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
 import { auth } from "@/auth";
 import type { Metadata } from "next";
@@ -38,14 +39,16 @@ import Image from "next/image";
 
 const nicheMap = Object.fromEntries(niches.map((n) => [n.slug, n]));
 
-// Render markdown to HTML via unified (remark + rehype). No runtime code
-// generation — required because Cloudflare Workers blocks new Function/eval.
+// Render markdown to HTML via unified. rehype-sanitize blocks raw HTML/JS and
+// dangerous URL protocols (e.g. javascript:) in case post content is ever
+// tampered with. No runtime code generation — Workers blocks new Function/eval.
 async function renderMarkdown(source: string): Promise<string> {
   const file = await unified()
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkRehype)
     .use(rehypeSlug)
+    .use(rehypeSanitize)
     .use(rehypeStringify)
     .process(source);
   return String(file);
