@@ -11,6 +11,13 @@ function blobHost(): string {
   return `${storeId}.private.blob.vercel-storage.com`;
 }
 
+// Lock the proxy down to known image prefixes + safe path segments + image
+// extensions. Without this, anyone on the public internet can enumerate any
+// object in the blob store via this endpoint.
+const ALLOWED_PREFIXES = new Set(["site", "blog", "post-images"]);
+const SEGMENT_RE = /^[a-zA-Z0-9_.-]+$/;
+const EXT_RE = /\.(webp|jpg|jpeg|png|gif|avif)$/i;
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
@@ -22,7 +29,19 @@ export async function GET(
     return new NextResponse("Storage not configured", { status: 503 });
   }
 
+  if (
+    path.length < 2 ||
+    !ALLOWED_PREFIXES.has(path[0]) ||
+    path.some((s) => s === ".." || !SEGMENT_RE.test(s))
+  ) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
   const pathname = path.join("/");
+  if (!EXT_RE.test(pathname)) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
   const blobUrl = `https://${blobHost()}/${pathname}`;
 
   const upstream = await fetch(blobUrl, {
