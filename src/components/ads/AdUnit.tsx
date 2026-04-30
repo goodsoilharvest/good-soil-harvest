@@ -3,38 +3,32 @@
 import { useEffect, useRef } from "react";
 
 interface AdUnitProps {
-  slot: string; // AdSense ad unit slot ID
-  format?: "auto" | "rectangle" | "horizontal";
+  slot: string; // AdSense ad unit slot ID (numeric)
+  format?: "auto" | "rectangle" | "horizontal" | "fluid";
+  layout?: "in-article";
   className?: string;
 }
 
-/**
- * Google AdSense ad unit. Only renders when:
- * - NEXT_PUBLIC_ADSENSE_ID env var is set (production only)
- * - The parent component decides to show it (free articles, non-subscribers)
- *
- * Usage: <AdUnit slot="1234567890" />
- */
-export function AdUnit({ slot, format = "auto", className = "" }: AdUnitProps) {
+export function AdUnit({ slot, format = "auto", layout, className = "" }: AdUnitProps) {
   const adRef = useRef<HTMLModElement>(null);
   const publisherId = process.env.NEXT_PUBLIC_ADSENSE_ID;
 
   useEffect(() => {
     if (!publisherId || !adRef.current) return;
     try {
-      // Push the ad to Google's ad rendering queue
       ((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle =
         (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle || []).push({});
     } catch {
-      // AdSense not loaded or blocked by ad blocker — silently degrade
+      // AdSense not loaded or blocked — silently degrade
     }
   }, [publisherId]);
 
   if (!publisherId) return null;
 
-  // Validate slot is numeric only to prevent attribute injection
   const safeSlot = /^\d+$/.test(slot) ? slot : null;
-  if (!safeSlot && slot !== "auto") return null;
+  if (!safeSlot) return null;
+
+  const isInArticle = layout === "in-article";
 
   return (
     <div className={`my-8 text-center ${className}`}>
@@ -42,11 +36,11 @@ export function AdUnit({ slot, format = "auto", className = "" }: AdUnitProps) {
       <ins
         ref={adRef}
         className="adsbygoogle"
-        style={{ display: "block" }}
+        style={{ display: "block", textAlign: "center" }}
         data-ad-client={publisherId}
-        data-ad-slot={safeSlot ?? slot}
+        data-ad-slot={safeSlot}
         data-ad-format={format}
-        data-full-width-responsive="true"
+        {...(isInArticle ? { "data-ad-layout": "in-article" } : { "data-full-width-responsive": "true" })}
       />
     </div>
   );

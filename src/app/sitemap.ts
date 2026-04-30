@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { dbAll, toDate } from "@/lib/db";
 
-const SITE = "https://www.goodsoilharvest.com";
+const SITE = "https://goodsoilharvest.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
