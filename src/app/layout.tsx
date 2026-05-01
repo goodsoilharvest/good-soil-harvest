@@ -66,13 +66,6 @@ export default function RootLayout({
             crossOrigin="anonymous"
           />
         )}
-        {process.env.NEXT_PUBLIC_CF_ANALYTICS_TOKEN && (
-          <script
-            defer
-            src="https://static.cloudflareinsights.com/beacon.min.js"
-            data-cf-beacon={`{"token":"${process.env.NEXT_PUBLIC_CF_ANALYTICS_TOKEN}"}`}
-          />
-        )}
       </head>
       <body className="min-h-screen flex flex-col">
         {process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_") && <StripeSandboxBanner />}
