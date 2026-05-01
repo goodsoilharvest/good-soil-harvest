@@ -29,5 +29,11 @@
       "database_id": "7c399e0b-7e25-40e5-bc79-25e2924eddfb",
       "migrations_dir": "migrations"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "IMG_BUCKET",
+      "bucket_name": "good-soil-harvest-images"
+    }
   ]
 }

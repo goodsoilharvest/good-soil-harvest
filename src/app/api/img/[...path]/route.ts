@@ -1,33 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-// Derives the Vercel Blob store hostname from the token.
-// Token format: vercel_blob_rw_{storeId}_{secret}
-function blobHost(): string {
-  const token = process.env.BLOB_READ_WRITE_TOKEN ?? "";
-  const prefix = "vercel_blob_rw_";
-  const storeId = token.startsWith(prefix)
-    ? token.slice(prefix.length).split("_")[0].toLowerCase()
-    : "";
-  return `${storeId}.private.blob.vercel-storage.com`;
-}
-
-// Lock the proxy down to known image prefixes + safe path segments + image
-// extensions. Without this, anyone on the public internet can enumerate any
-// object in the blob store via this endpoint.
+// Image proxy. Reads from the IMAGES R2 binding directly — no auth dance,
+// no upstream fetch. Path validation locks the route to known prefixes +
+// safe segments + image extensions only.
 const ALLOWED_PREFIXES = new Set(["site", "blog", "post-images"]);
 const SEGMENT_RE = /^[a-zA-Z0-9_.-]+$/;
 const EXT_RE = /\.(webp|jpg|jpeg|png|gif|avif)$/i;
+
+const CONTENT_TYPES: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+  avif: "image/avif",
+};
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await params;
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-
-  if (!token) {
-    return new NextResponse("Storage not configured", { status: 503 });
-  }
 
   if (
     path.length < 2 ||
@@ -37,26 +31,27 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const pathname = path.join("/");
-  if (!EXT_RE.test(pathname)) {
+  const key = path.join("/");
+  if (!EXT_RE.test(key)) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const blobUrl = `https://${blobHost()}/${pathname}`;
-
-  const upstream = await fetch(blobUrl, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!upstream.ok) {
+  const bucket = getCloudflareContext().env.IMG_BUCKET;
+  const obj = await bucket.get(key);
+  if (!obj) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  return new NextResponse(upstream.body, {
+  const ext = key.split(".").pop()?.toLowerCase() ?? "";
+  const contentType =
+    obj.httpMetadata?.contentType ?? CONTENT_TYPES[ext] ?? "application/octet-stream";
+
+  return new NextResponse(obj.body, {
     headers: {
-      "Content-Type": upstream.headers.get("Content-Type") ?? "image/jpeg",
-      // Cache aggressively — images are content-addressed by slug and never change.
+      "Content-Type": contentType,
+      // Images are content-addressed by slug+timestamp and never change.
       "Cache-Control": "public, max-age=31536000, immutable",
+      "ETag": obj.httpEtag,
     },
   });
 }
