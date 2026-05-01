@@ -22,23 +22,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  // Idempotency check via PRIMARY KEY conflict
-  const seen = await dbFirst<{ stripe_event_id: string }>(
-    `SELECT stripe_event_id FROM webhook_events WHERE stripe_event_id = ?`,
+  // Idempotency: only ack-as-duplicate when the prior handler ran to
+  // completion (completed_at set). If a previous run inserted the row but
+  // crashed before finishing, completed_at stays NULL — re-run the handler;
+  // every db op below is an idempotent UPSERT/UPDATE, so it's safe.
+  const seen = await dbFirst<{ completed_at: string | null }>(
+    `SELECT completed_at FROM webhook_events WHERE stripe_event_id = ?`,
     event.id,
   );
-  if (seen) {
+  if (seen?.completed_at) {
     return NextResponse.json({ received: true, duplicate: true });
   }
-  try {
-    await dbRun(
-      `INSERT INTO webhook_events (stripe_event_id, event_type) VALUES (?, ?)`,
-      event.id, event.type,
-    );
-  } catch (err) {
-    // SQLITE_CONSTRAINT — race with another concurrent invocation, treat as duplicate
-    console.warn("[webhooks/stripe] idempotency race:", err);
-    return NextResponse.json({ received: true, duplicate: true });
+  if (!seen) {
+    try {
+      await dbRun(
+        `INSERT INTO webhook_events (stripe_event_id, event_type) VALUES (?, ?)`,
+        event.id, event.type,
+      );
+    } catch (err) {
+      // SQLITE_CONSTRAINT — concurrent insert lost the race. Fall through to
+      // run the handler; the eventual UPDATE completed_at is idempotent.
+      console.warn("[webhooks/stripe] insert race:", err);
+    }
   }
 
   switch (event.type) {
@@ -170,6 +175,11 @@ export async function POST(req: NextRequest) {
       break;
     }
   }
+
+  await dbRun(
+    `UPDATE webhook_events SET completed_at = ? WHERE stripe_event_id = ?`,
+    nowISO(), event.id,
+  );
 
   return NextResponse.json({ received: true });
 }

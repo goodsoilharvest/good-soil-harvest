@@ -46,10 +46,10 @@ export async function POST(req: NextRequest) {
 
   const existing = await dbFirst<{ id: string }>(`SELECT id FROM users WHERE email = ?`, email);
   if (existing) {
-    return NextResponse.json(
-      { error: "account_exists", message: "An account with that email already exists. Sign in instead." },
-      { status: 409 }
-    );
+    // Don't reveal account existence. Skip the insert silently — same response
+    // shape as a fresh signup. Future: send a "someone tried to register with
+    // your email" notice to the existing account.
+    return NextResponse.json({ ok: true });
   }
 
   const passwordHash = await bcrypt.hash(password, 13);

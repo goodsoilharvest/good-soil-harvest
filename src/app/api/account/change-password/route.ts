@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const newHash = await bcrypt.hash(newPassword, 12);
+  const newHash = await bcrypt.hash(newPassword, 13);
   await dbRun(`UPDATE users SET password_hash = ? WHERE id = ?`, newHash, user.id);
 
   return NextResponse.json({ ok: true });
